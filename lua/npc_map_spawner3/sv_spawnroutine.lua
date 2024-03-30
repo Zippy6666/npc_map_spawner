@@ -1,0 +1,126 @@
+-- Here is where we put NPCs into the map
+
+
+local red = Color(255, 0 ,0)
+local green = Color(0, 255, 0)
+local blue = Color(0, 0, 255)
+local white = Color(255,255,255)
+
+
+    -- Executes a "spawn routine"
+local NextSpawnRoutine = CurTime()
+function NPCMS:SpawnRoutine()
+    -- Track time
+    local startTime = SysTime()
+
+    -- Get spawn positions
+    local spawnpositions = self:FindDesiredSpawnPositions(self.cvar_poscount:GetInt())
+    for _, v in ipairs(spawnpositions) do
+        self:SpawnNPC("beta_unit_combine_assassin", v) -- Spawn on each spawn position
+    end
+
+
+    -- Set next spawn routine
+    NextSpawnRoutine = CurTime()+self.cvar_cooldown:GetFloat() 
+
+
+    -- Show time that it took to do the entire routine
+    if self.cvar_show_time:GetBool() then
+        debugoverlay.ScreenText(0.01, 0.5, "Spawn routine time: "..(SysTime() - startTime), self.cvar_cooldown:GetFloat()+0.03, white )
+    end
+end
+
+
+
+    -- Tick function
+function NPCMS:SpawnerTick()
+
+    if !self.cvar_enable:GetBool() then return end -- Spawner killswitch
+    if NextSpawnRoutine > CurTime() then return end -- Spawner on cooldown
+
+    self:SpawnRoutine()
+
+end
+hook.Add("Tick", "NPCMapSpawner3", function() NPCMS:SpawnerTick() end)
+
+
+
+    -- Return a table of spawn positions that are ideal for the current settings
+function NPCMS:FindDesiredSpawnPositions( count )
+    local positions = {}
+    local _, players = player.Iterator()
+    local extraData = {
+        visibilityCheck = self.cvar_visibility:GetBool()
+    }
+    for i = 1, count do
+
+        -- Find a spawn position
+        local ply = table.Random(players)
+        if ply then
+            local pos = self:FindSpawnPosition( ply, self.cvar_mindist:GetInt(), self.cvar_maxdist:GetInt(), extraData )
+            if pos then
+                table.insert(positions, pos)
+            end
+        end
+    
+    end
+    return positions
+end
+
+
+    -- Finds a position in the map to spawn
+    -- Returns a vector or false if none was found
+    -- 'ply' - The player to spawn near
+    -- 'mindist' - Min distance from said player
+    -- 'maxdist' - Max distance from said player
+    -- 'extradata.visibilityCheck' - Dont spawn on nodes that are visible to players
+local visCheckUpVec = Vector(0, 0, 40)
+function NPCMS:FindSpawnPosition( ply, mindist, maxdist, extradata )
+
+    -- Shuffle order of nodes in table
+    table.Shuffle(self.NodePositions)
+
+    -- For each node pos...
+    for k, pos in pairs(self.NodePositions) do
+        local dist = ply:GetPos():DistToSqr(pos)
+
+
+        -- Node not in distance, skip
+        if dist < mindist^2 then
+            continue
+        end
+        if dist > maxdist^2 then
+            continue
+        end
+    
+
+        -- Visibility check active and pos is visible, cancel the find
+        if extradata.visibilityCheck && conv.playersSeePos( pos+visCheckUpVec ) then
+            debugoverlay.Sphere(pos, 40, self, red)
+            return false 
+        end
+
+
+        -- Success, return pos
+        debugoverlay.Sphere(pos, 40, self, green)
+        return pos
+    
+    end
+
+
+    return false
+
+end
+
+
+    -- Notify that the npc map spawner is on when the player logs in
+NPCMS.NotifySpawnerOn_Done = false
+function NPCMS:NotifySpawnerOn()
+    if !self.NotifySpawnerOn_Done && self.cvar_enable:GetBool() then
+        PrintMessage(HUD_PRINTTALK, "Warning: NPC Map Spawner is currently active!")
+        self.NotifySpawnerOn_Done = true
+    end
+end
+hook.Add("PlayerInitialSpawn", "NotifyNPCMapSpawnerIsOn", function() NPCMS:NotifySpawnerOn() end)
+
+
