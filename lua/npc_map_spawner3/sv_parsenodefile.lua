@@ -137,4 +137,66 @@ function NPCMS:GetNodePositions()
 end
 
 
-NPCMS.NodePositions = NPCMS.NodePositions or NPCMS:GetNodePositions()
+
+local ang0 = Angle()
+local fromGndDist = 10
+local trUpVec = Vector(0, 0, 30)
+local trEnd_DownVec = Vector(0, 0, 30)
+local fromGndVec = Vector(0, 0, fromGndDist)
+local dev = GetConVar("developer")
+local green = Color(0, 255, 0)
+function NPCMS:GetAugmentedNodePositions()
+	local nodepositions = {}
+
+
+	for _, pos in ipairs(self:GetNodePositions()) do
+
+		-- Better node position
+		pos = util.TraceLine({start=pos+trUpVec, endpos=pos-trEnd_DownVec, mask=MASK_NPCWORLDSTATIC}).HitPos + fromGndVec
+
+
+		-- Water check, we dont want spawn positions in water
+		if bit.bor(util.PointContents(pos), CONTENTS_WATER) == CONTENTS_WATER then
+			continue
+		end
+
+
+		-- Ground distance check
+		local groundDistCheck = util.TraceLine({
+			start = pos,
+			endpos = pos-fromGndVec*1.5,
+			mask = MASK_NPCWORLDSTATIC,
+		})
+		if !groundDistCheck.Hit then
+			continue
+		end
+
+
+		-- Good position, use this one
+		table.insert(nodepositions, pos)
+
+	end
+
+	return nodepositions
+end
+hook.Add("InitPostEntity", "NPCMapSpawnerNodes", function()
+	NPCMS.NodePositions = NPCMS:GetAugmentedNodePositions()
+end)
+concommand.Add("npc_map_spawner_reload_nodes", function()
+
+	NPCMS.NodePositions = NPCMS:GetAugmentedNodePositions()
+
+	for _, v in ipairs(NPCMS.NodePositions) do
+		if dev:GetBool() then
+			local test = ents.Create("base_gmodentity")
+			test:SetModel("models/hunter/blocks/cube025x025x025.mdl")
+			test:SetMaterial("models/wireframe")
+			test:SetPos(v)
+			test:SetColor(green)
+			test:Spawn()
+			SafeRemoveEntityDelayed(test, 5)
+		end
+	end
+
+end)
+

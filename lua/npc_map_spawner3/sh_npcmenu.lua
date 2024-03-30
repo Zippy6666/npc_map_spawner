@@ -49,8 +49,8 @@ if CLIENT then
         self.NPC_List:Dock(TOP)
         self.NPC_List:DockMargin(10, 10, 10, 10)
         self.NPC_List:AddColumn("Name")
-        self.NPC_List:AddColumn("Cls")
         self.NPC_List:AddColumn("MenuCls")
+        self.NPC_List:AddColumn("Cls")
         self.NPC_List:AddColumn("1/X")
         
     end

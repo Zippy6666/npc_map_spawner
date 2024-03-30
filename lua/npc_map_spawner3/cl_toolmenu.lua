@@ -4,8 +4,6 @@ hook.Add("PopulateToolMenu", "NPCSpawner", function()
 
     spawnmenu.AddToolMenuOption("Utilities", "AI", "NPC Map Spawner", "NPC Map Spawner", "", "", function(panel)
 
-        NPCMS.NPCMenu:CreateNPCMenu(panel)
-
         panel:CheckBox("Enabled", "npc_map_spawner_enable")
         panel:ControlHelp("Enable NPC map spawning.")
 
@@ -24,6 +22,8 @@ hook.Add("PopulateToolMenu", "NPCSpawner", function()
 
         panel:CheckBox("Visibility Check", "npc_map_spawner_visibility")
         panel:ControlHelp("Do a visibility check when finding a spawn position. If the spawn position can be seen by a player, it will be discarded.")
+
+        NPCMS.NPCMenu:CreateNPCMenu(panel)
         
     end)
 
