@@ -10,10 +10,29 @@ function NPCMS:SpawnRoutine()
     -- Track time
     local startTime = SysTime()
 
+
+    -- No nodes on the map
+    if table.IsEmpty(self.NodePositions) then
+        PrintMessage(HUD_PRINTTALK, "NPC MAP SPAWNER: No nodegraph found!")
+        NextSpawnRoutine = CurTime()+3
+        return
+    end
+
+    -- No NPCs to spawn
+    if table.IsEmpty(self.CurrentSpawnableNPCs) then
+        PrintMessage(HUD_PRINTTALK, "NPC MAP SPAWNER: No NPCs to spawn!")
+        NextSpawnRoutine = CurTime()+3
+        return
+    end
+
+
     -- Get spawn positions
     local spawnpositions = self:FindDesiredSpawnPositions(self.cvar_poscount:GetInt())
     for _, v in ipairs(spawnpositions) do
-        self:SpawnNPC("zb_metropolice_elite", v) -- Spawn on each spawn position
+        local cls = self:GetNPCClsToSpawn()
+        if cls then
+            self:SpawnNPC( cls, v ) -- Spawn on each spawn position
+        end
     end
 
 
@@ -34,12 +53,6 @@ function NPCMS:SpawnerTick()
 
     if !self.cvar_enable:GetBool() then return end -- Spawner killswitch
     if NextSpawnRoutine > CurTime() then return end -- Spawner on cooldown
-
-    -- No nodes on the map
-    if table.IsEmpty(self.NodePositions) then
-        PrintMessage(HUD_PRINTTALK, "NPC MAP SPAWNER: No nodegraph found!")
-        return
-    end
 
     self:SpawnRoutine()
 

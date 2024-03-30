@@ -42,6 +42,7 @@ if CLIENT then
         panel:ControlHelp("When enabling this, clicking the NPC icons in the spawnmenu will add the NPCs to this list, instead of spawning them.")
 
 
+        -- NPC List: Serves as the client 'CurrentSpawnableNPCs'
         panel:ControlHelp("\nNPC List:")
         self.NPC_List = vgui.Create("DListView", panel)
         self.NPC_List:SetHeight(400)
@@ -59,7 +60,7 @@ if CLIENT then
     end
 
 
-        -- Adds NPCs to the list
+        -- Adds NPCs to the client's list
     function NPCMS.NPCMenu:AddNPCToList( spawnmenuclass )
         local npclist = conv.getSpawnMenuNPCs()
         local npctbl = npclist[spawnmenuclass]
@@ -72,8 +73,10 @@ if CLIENT then
         -- Add NPC to list from spawnmenu by player
     net.Receive("NPCMS_AddNPCToList", function()
         local spawnmenuclass = net.ReadString()
-        NPCMS.NPCMenu:AddNPCToList( spawnmenuclass )
-        chat.AddText(chatcol1, "NPC MAP SPAWNER: Added '"..spawnmenuclass.."' to the current preset.")
+        if NPCMS && NPCMS.NPCMenu && NPCMS.NPCMenu.NPC_List then
+            NPCMS.NPCMenu:AddNPCToList( spawnmenuclass )
+            chat.AddText(chatcol1, "NPC MAP SPAWNER: Added '"..spawnmenuclass.."' to the current preset.")
+        end
     end)
 
 
@@ -173,14 +176,26 @@ if SERVER then
     end)
 
 
+        -- Adds to the table and broadcasts to all clients so that the NPC shows up in their lists if available
+    function NPCMS:AddToCurrentSpawnableNPCs(spawnmenuclass)
+
+        net.Start("NPCMS_AddNPCToList")
+        net.WriteString(spawnmenuclass)
+        net.Broadcast()
+
+        local spawndata = {
+            npcmenucls = spawnmenuclass
+        }
+        table.insert(self.CurrentSpawnableNPCs, spawndata)
+
+    end
+
+
         -- Select NPCs to add to the NPC list when clicking the icons in the spawnmenu
     hook.Add("PlayerSpawnNPC", "NPCMapSpawner_Selecting", function( ply, npc_type, wep )
         if ply.NPCMS_NPCSelectingEnabled then
 
-            net.Start("NPCMS_AddNPCToList")
-            net.WriteString(npc_type)
-            net.Send(ply)
-
+            NPCMS:AddToCurrentSpawnableNPCs(npc_type)
             return false
     
         end

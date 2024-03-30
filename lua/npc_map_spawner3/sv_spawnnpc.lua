@@ -6,8 +6,10 @@ local dev = GetConVar("developer")
 local NPC = FindMetaTable("NPC")
 
 
+NPCMS.CurrentSpawnableNPCs = {}
 NPCMS.NPCColCache = {} -- Table of NPC collisions
 NPCMS.CollisionsBeingCached = {}
+
 
 
     -- Saves NPC collisions and removes the NPC
@@ -19,6 +21,11 @@ function NPC:NPCMSCollCache( mySpawnmenuclass )
     self:Remove()
 end
 
+
+function NPCMS:GetNPCClsToSpawn()
+    local spawndata = table.Random(self.CurrentSpawnableNPCs)
+    return spawndata.npcmenucls
+end
 
     -- Cache collisions for a specific NPC by 'spawnmenuclass'
 function NPCMS:CacheCollisions( spawnmenuclass )
