@@ -1,6 +1,3 @@
--- Here is where we put NPCs into the map
-
-
 local red = Color(255, 0 ,0)
 local green = Color(0, 255, 0)
 local blue = Color(0, 0, 255)

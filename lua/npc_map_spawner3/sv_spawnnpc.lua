@@ -1,5 +1,3 @@
--- NPCs are identified by their spawn menu class
-
 local dev = GetConVar("developer")
 
 
