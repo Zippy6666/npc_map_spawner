@@ -14,7 +14,7 @@ NPCMS.CollisionsBeingCached = {}
 function NPC:NPCMSCollCache( mySpawnmenuclass )
     NPCMS.NPCColCache[mySpawnmenuclass] = {self:OBBMins(), self:OBBMaxs()}
     if dev:GetBool() then
-        PrintMessage(HUD_PRINTTALK, "Cached "..mySpawnmenuclass.." collisions.")
+        PrintMessage(HUD_PRINTTALK, "NPC MAP SPAWNER: Cached "..mySpawnmenuclass.." collisions.")
     end
     self:Remove()
 end

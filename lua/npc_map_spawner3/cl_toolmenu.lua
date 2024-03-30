@@ -4,6 +4,8 @@ hook.Add("PopulateToolMenu", "NPCSpawner", function()
 
     spawnmenu.AddToolMenuOption("Utilities", "AI", "NPC Map Spawner", "NPC Map Spawner", "", "", function(panel)
 
+        NPCMS.NPCMenu:CreateNPCMenu(panel)
+
         panel:CheckBox("Enabled", "npc_map_spawner_enable")
         panel:ControlHelp("Enable NPC map spawning.")
 

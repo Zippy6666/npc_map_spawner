@@ -13,7 +13,7 @@ function NPCMS:SpawnRoutine()
     -- Get spawn positions
     local spawnpositions = self:FindDesiredSpawnPositions(self.cvar_poscount:GetInt())
     for _, v in ipairs(spawnpositions) do
-        self:SpawnNPC("beta_unit_combine_assassin", v) -- Spawn on each spawn position
+        self:SpawnNPC("zb_metropolice_elite", v) -- Spawn on each spawn position
     end
 
 
