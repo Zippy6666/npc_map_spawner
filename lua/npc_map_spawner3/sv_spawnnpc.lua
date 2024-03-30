@@ -11,10 +11,10 @@ NPCMS.CollisionsBeingCached = {}
 
 
     -- Saves NPC collisions and removes the NPC
-function NPC:NPCMSCollCache()
-    NPCMS.NPCColCache[spawnmenuclass] = {self:OBBMins(), self:OBBMaxs()}
+function NPC:NPCMSCollCache( mySpawnmenuclass )
+    NPCMS.NPCColCache[mySpawnmenuclass] = {self:OBBMins(), self:OBBMaxs()}
     if dev:GetBool() then
-        PrintMessage(HUD_PRINTTALK, "Cached "..spawnmenuclass.." collisions.")
+        PrintMessage(HUD_PRINTTALK, "Cached "..mySpawnmenuclass.." collisions.")
     end
     self:Remove()
 end
@@ -25,7 +25,7 @@ function NPCMS:CacheCollisions( spawnmenuclass )
 
     local npc = ents.CreateSpawnMenuNPC(spawnmenuclass)
     if IsValid(npc) then
-        npc:CallNextTick("NPCMSCollCache")
+        npc:CallNextTick("NPCMSCollCache", spawnmenuclass)
     end
 
 end

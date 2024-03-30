@@ -13,7 +13,7 @@ function NPCMS:SpawnRoutine()
     -- Get spawn positions
     local spawnpositions = self:FindDesiredSpawnPositions(self.cvar_poscount:GetInt())
     for _, v in ipairs(spawnpositions) do
-        self:SpawnNPC("npc_zombie", v) -- Spawn on each spawn position
+        self:SpawnNPC("beta_unit_combine_assassin", v) -- Spawn on each spawn position
     end
 
 
@@ -34,6 +34,12 @@ function NPCMS:SpawnerTick()
 
     if !self.cvar_enable:GetBool() then return end -- Spawner killswitch
     if NextSpawnRoutine > CurTime() then return end -- Spawner on cooldown
+
+    -- No nodes on the map
+    if table.IsEmpty(self.NodePositions) then
+        PrintMessage(HUD_PRINTTALK, "NPC MAP SPAWNER: No nodegraph found!")
+        return
+    end
 
     self:SpawnRoutine()
 
@@ -73,13 +79,6 @@ end
     -- 'extradata.visibilityCheck' - Dont spawn on nodes that are visible to players
 local visCheckUpVec = Vector(0, 0, 40)
 function NPCMS:FindSpawnPosition( ply, mindist, maxdist, extradata )
-
-    -- No nodes on the map
-    if table.IsEmpty(self.NodePositions) then
-        PrintMessage(HUD_PRINTTALK, "NPC MAP SPAWNER: No nodegraph found!")
-        return
-    end
-
 
     -- Shuffle order of nodes in table
     table.Shuffle(self.NodePositions)
