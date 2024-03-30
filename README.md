@@ -1,2 +1,2 @@
-# npc_map_spawner
-another npc map spawner literally just called npc map spawner
+# NPC Map Spawner
+Another npc map spawner literally just called NPC Map Spawner...
