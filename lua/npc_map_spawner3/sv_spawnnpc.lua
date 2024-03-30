@@ -1,27 +1,38 @@
+-- For NPC Spawning
+-- Uses the spawn menu to find stuff about NPCs
+
+
 local dev = GetConVar("developer")
+local NPC = FindMetaTable("NPC")
 
 
 NPCMS.NPCColCache = {} -- Table of NPC collisions
 NPCMS.CollisionsBeingCached = {}
 
 
+    -- Saves NPC collisions and removes the NPC
+function NPC:NPCMSCollCache()
+    NPCMS.NPCColCache[spawnmenuclass] = {self:OBBMins(), self:OBBMaxs()}
+    if dev:GetBool() then
+        PrintMessage(HUD_PRINTTALK, "Cached "..spawnmenuclass.." collisions.")
+    end
+    self:Remove()
+end
+
+
+    -- Cache collisions for a specific NPC by 'spawnmenuclass'
 function NPCMS:CacheCollisions( spawnmenuclass )
 
-    ents.GetInfo( spawnmenuclass, function( npc )
-
-        if !IsValid(npc) then return end
-
-        self.NPCColCache[spawnmenuclass] = {npc:OBBMins(), npc:OBBMaxs()}
-
-        if dev:GetBool() then
-            PrintMessage(HUD_PRINTTALK, "Cached "..spawnmenuclass.." collisions.")
-        end
-
-    end)
+    local npc = ents.CreateSpawnMenuNPC(spawnmenuclass)
+    if IsValid(npc) then
+        npc:CallNextTick("NPCMSCollCache")
+    end
 
 end
 
 
+    -- Check if an NPC of type 'spawnmenuclass' would fit at 'pos'
+    -- Returns true if it would, otherwise false
 function NPCMS:DoCollCheck( spawnmenuclass, pos )
     local mins, maxs = self.NPCColCache[spawnmenuclass][1], self.NPCColCache[spawnmenuclass][2]
 
@@ -43,11 +54,13 @@ function NPCMS:DoCollCheck( spawnmenuclass, pos )
 end
 
 
+    -- Get an appropriate position to spawn this NPC on
 function NPCMS:GoodNPCPos( spawnmenuclass, nodepos )
     return nodepos
 end
 
 
+    -- Try spawning an NPC of type 'spawnmenuclass' at 'nodepos'
 function NPCMS:SpawnNPC( spawnmenuclass, nodepos )
 
     if !self.NPCColCache[spawnmenuclass] then

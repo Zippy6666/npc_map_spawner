@@ -13,7 +13,7 @@ function NPCMS:SpawnRoutine()
     -- Get spawn positions
     local spawnpositions = self:FindDesiredSpawnPositions(self.cvar_poscount:GetInt())
     for _, v in ipairs(spawnpositions) do
-        self:SpawnNPC("beta_unit_combine_assassin", v) -- Spawn on each spawn position
+        self:SpawnNPC("npc_zombie", v) -- Spawn on each spawn position
     end
 
 
@@ -74,6 +74,13 @@ end
 local visCheckUpVec = Vector(0, 0, 40)
 function NPCMS:FindSpawnPosition( ply, mindist, maxdist, extradata )
 
+    -- No nodes on the map
+    if table.IsEmpty(self.NodePositions) then
+        PrintMessage(HUD_PRINTTALK, "NPC MAP SPAWNER: No nodegraph found!")
+        return
+    end
+
+
     -- Shuffle order of nodes in table
     table.Shuffle(self.NodePositions)
 
@@ -114,7 +121,9 @@ end
 NPCMS.NotifySpawnerOn_Done = false
 function NPCMS:NotifySpawnerOn()
     if !self.NotifySpawnerOn_Done && self.cvar_enable:GetBool() then
-        PrintMessage(HUD_PRINTTALK, "Warning: NPC Map Spawner is currently active!")
+        timer.Simple(5, function()
+            PrintMessage(HUD_PRINTTALK, "NPC MAP SPAWNER: The spawner is currently active!")
+        end)
         self.NotifySpawnerOn_Done = true
     end
 end
