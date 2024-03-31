@@ -3,9 +3,9 @@ local green = Color(0, 255, 0)
 local blue = Color(0, 0, 255)
 local white = Color(255,255,255)
 
-
     -- Executes a "spawn routine"
 local NextSpawnRoutine = CurTime()
+local ShowInfo_LastNPCCount = 0
 function NPCMS:SpawnRoutine()
     -- Track time
     local startTime = SysTime()
@@ -43,10 +43,13 @@ function NPCMS:SpawnRoutine()
     -- Show info
     if self.cvar_show_info:GetBool() then
 
+        local npccount = #self.SpawnedNPCs
         local dur = self.cvar_cooldown:GetFloat()+0.03
         debugoverlay.ScreenText(0.01, 0.40, "Spawn routine time: "..(SysTime() - startTime), dur, white )
-        debugoverlay.ScreenText(0.01, 0.42, "Spawned NPCs: "..#self.SpawnedNPCs, dur, white )
+        debugoverlay.ScreenText(0.01, 0.42, "NPCs += "..npccount-ShowInfo_LastNPCCount, dur, white )
+        debugoverlay.ScreenText(0.01, 0.44, "Total NPCs: "..npccount, dur, white )
 
+        ShowInfo_LastNPCCount = npccount
     end
 end
 

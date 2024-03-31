@@ -8,38 +8,13 @@ if CLIENT then
     function NPCMS.NPCMenu:CreateNPCMenu(panel)
 
         panel:ControlHelp("\nPresets:")
-
-
         self.PresetBox = vgui.Create("DComboBox", panel)
         self.PresetBox:SetHeight(25)
         self.PresetBox:Dock(TOP)
         self.PresetBox:DockMargin(10, 10, 10, 10)
         self.PresetBox.OnSelect = presetBoxChooseOption
-
-
         local buttonAddPreset = panel:Button("Save Preset")
-        -- buttonAddPreset.DoClick = addPresetButton
-
-
         local buttonRemovePreset = panel:Button("Remove Preset")
-        -- buttonRemovePreset.DoClick = removePresetButton
-
-
-        -- net.Start("ZippyHorde_SelectPreset")
-        -- net.WriteString("default")
-        -- net.SendToServer()
-        -- self.LastPresetChoice = "default"
-        -- net.Start("ZippyHorde_GetPresets")
-        -- net.SendToServer()
-
-
-        local NPCSelectingEnabled = panel:CheckBox("NPC Spawnmenu Select")
-        function NPCSelectingEnabled:OnChange( val )
-            net.Start("NPCMS_NPCSelecting")
-            net.WriteBool(val)
-            net.SendToServer()
-        end
-        panel:ControlHelp("When enabling this, clicking the NPC icons in the spawnmenu will add the NPCs to this list, instead of spawning them.")
 
 
         -- NPC List: Serves as the client 'CurrentSpawnableNPCs'
@@ -52,7 +27,27 @@ if CLIENT then
         self.NPC_List:AddColumn("MenuCls")
         self.NPC_List:AddColumn("Cls")
         self.NPC_List:AddColumn("1/X")
+
+
+        -- Refresh list
+        local buttonRefresh = panel:Button("Refresh")
+        function buttonRefresh:DoClick()
+            net.Start("NPCMS_Refresh")
+            net.SendToServer()
+        end
+        -- Refresh now
+        net.Start("NPCMS_Refresh")
+        net.SendToServer()
         
+
+        local NPCSelectingEnabled = panel:CheckBox("NPC Spawnmenu Select")
+        function NPCSelectingEnabled:OnChange( val )
+            net.Start("NPCMS_NPCSelecting")
+            net.WriteBool(val)
+            net.SendToServer()
+        end
+        panel:ControlHelp("When enabling this, clicking the NPC icons in the spawnmenu will add the NPCs to this list, instead of spawning them.")
+
     end
 
     function NPCMS.NPCMenu:GetSelectedPreset()
@@ -70,12 +65,26 @@ if CLIENT then
     end
 
 
+    function NPCMS.NPCMenu:ClearList()
+        for k in ipairs(self.NPC_List:GetLines()) do
+            self.NPC_List:RemoveLine(k)
+        end
+    end
+
+
         -- Add NPC to list from spawnmenu by player
     net.Receive("NPCMS_AddNPCToList", function()
         local spawnmenuclass = net.ReadString()
         if NPCMS && NPCMS.NPCMenu && NPCMS.NPCMenu.NPC_List then
             NPCMS.NPCMenu:AddNPCToList( spawnmenuclass )
-            chat.AddText(chatcol1, "NPC MAP SPAWNER: Added '"..spawnmenuclass.."' to the current preset.")
+            -- chat.AddText(chatcol1, )
+        end
+    end)
+
+
+    net.Receive("NPCMS_ClearNPCList", function()
+        if NPCMS && NPCMS.NPCMenu && NPCMS.NPCMenu.NPC_List then
+            NPCMS.NPCMenu:ClearList()
         end
     end)
 
@@ -162,6 +171,25 @@ if SERVER then
 
     util.AddNetworkString("NPCMS_NPCSelecting")
     util.AddNetworkString("NPCMS_AddNPCToList")
+    util.AddNetworkString("NPCMS_ClearNPCList")
+    util.AddNetworkString("NPCMS_Refresh")
+
+
+    net.Receive("NPCMS_Refresh", function(_, ply)
+        if !ply:IsSuperAdmin() then return end
+
+        net.Start("NPCMS_ClearNPCList")
+        net.Send(ply)
+
+
+        for _, v in ipairs(NPCMS.CurrentSpawnableNPCs) do
+            if v.npcmenucls then
+                net.Start("NPCMS_AddNPCToList")
+                net.WriteString(v.npcmenucls)
+                net.Send(ply)
+            end
+        end
+    end)
 
 
         -- Enable spawn menu selecting NPCs for this player
@@ -187,6 +215,8 @@ if SERVER then
             npcmenucls = spawnmenuclass
         }
         table.insert(self.CurrentSpawnableNPCs, spawndata)
+
+        PrintMessage(HUD_PRINTTALK, "NPC MAP SPAWNER: Added '"..spawnmenuclass.."' to the current preset.")
 
     end
 
