@@ -6,7 +6,6 @@ local dev = GetConVar("developer")
 local NPC = FindMetaTable("NPC")
 
 
-NPCMS.CurrentSpawnableNPCs = {}
 NPCMS.SpawnedNPCs = {}
 NPCMS.NPCColCache = {} -- Table of NPC collisions
 NPCMS.CollisionsBeingCached = {}
@@ -23,10 +22,13 @@ function NPC:NPCMSCollCache( mySpawnmenuclass )
 end
 
 
+    -- Decide which NPC we should spawn
+    -- Return npc class in spawn menu
 function NPCMS:GetNPCClsToSpawn()
-    local spawndata = table.Random(self.CurrentSpawnableNPCs)
-    return spawndata.npcmenucls
+    local SPAWNDATA = table.Random(self.CurrentSpawnableNPCs)
+    return SPAWNDATA.menucls
 end
+
 
     -- Cache collisions for a specific NPC by 'spawnmenuclass'
 function NPCMS:CacheCollisions( spawnmenuclass )
