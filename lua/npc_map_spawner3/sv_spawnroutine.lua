@@ -40,9 +40,13 @@ function NPCMS:SpawnRoutine()
     NextSpawnRoutine = CurTime()+self.cvar_cooldown:GetFloat() 
 
 
-    -- Show time that it took to do the entire routine
-    if self.cvar_show_time:GetBool() then
-        debugoverlay.ScreenText(0.01, 0.5, "Spawn routine time: "..(SysTime() - startTime), self.cvar_cooldown:GetFloat()+0.03, white )
+    -- Show info
+    if self.cvar_show_info:GetBool() then
+
+        local dur = self.cvar_cooldown:GetFloat()+0.03
+        debugoverlay.ScreenText(0.01, 0.40, "Spawn routine time: "..(SysTime() - startTime), dur, white )
+        debugoverlay.ScreenText(0.01, 0.42, "Spawned NPCs: "..#self.SpawnedNPCs, dur, white )
+
     end
 end
 
@@ -53,6 +57,7 @@ function NPCMS:SpawnerTick()
 
     if !self.cvar_enable:GetBool() then return end -- Spawner killswitch
     if NextSpawnRoutine > CurTime() then return end -- Spawner on cooldown
+    if #self.SpawnedNPCs >= self.cvar_maxnpcs:GetInt() then return end -- Too many NPCs
 
     self:SpawnRoutine()
 

@@ -7,11 +7,14 @@ hook.Add("PopulateToolMenu", "NPCSpawner", function()
         panel:CheckBox("Enabled", "npc_map_spawner_enable")
         panel:ControlHelp("Enable NPC map spawning.")
 
-        panel:CheckBox("Show Time", "npc_map_spawner_show_time")
-        panel:ControlHelp("Show how long spawn routines took on the screen. Requires 'developer' to be set to '1' or more.")
+        panel:CheckBox("Show Info", "npc_map_spawner_show_info")
+        panel:ControlHelp("Show spawn routine info on the screen. Requires 'developer' to be set to '1' or more.")
 
-        panel:NumSlider("Position Count", "npc_map_spawner_poscount", 1, 100, 0)
-        panel:ControlHelp("How many positions should we find to spawn on every spawn routine?")
+        panel:NumSlider("Desired NPCs", "npc_map_spawner_maxnpcs", 1, 1000, 0)
+        panel:ControlHelp("If the number of NPCs spawned by the spawner is more than this, it won't try spawning any more.")
+
+        panel:NumSlider("Spawn Attempts", "npc_map_spawner_poscount", 1, 100, 0)
+        panel:ControlHelp("How many spawns should it try to do each routine?")
 
         panel:NumSlider("Cooldown", "npc_map_spawner_cooldown", 0, 60, 2)
         panel:ControlHelp("How many seconds do we wait between spawn routines.")
@@ -22,6 +25,13 @@ hook.Add("PopulateToolMenu", "NPCSpawner", function()
 
         panel:CheckBox("Visibility Check", "npc_map_spawner_visibility")
         panel:ControlHelp("Do a visibility check when finding a spawn position. If the spawn position can be seen by a player, it will be discarded.")
+
+        local button = panel:Button("Reset Settings")
+        function button:DoClick()
+            net.Start("NPCMS_ResetSettings")
+            net.SendToServer()
+        end
+
 
         NPCMS.NPCMenu:CreateNPCMenu(panel)
         

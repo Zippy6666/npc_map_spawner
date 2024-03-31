@@ -7,6 +7,7 @@ local NPC = FindMetaTable("NPC")
 
 
 NPCMS.CurrentSpawnableNPCs = {}
+NPCMS.SpawnedNPCs = {}
 NPCMS.NPCColCache = {} -- Table of NPC collisions
 NPCMS.CollisionsBeingCached = {}
 
@@ -99,11 +100,32 @@ function NPCMS:SpawnNPC( spawnmenuclass, nodepos )
 
 
     -- Spawn the NPC
-    local wep = nil -- Default weapon for now
-    ents.CreateSpawnMenuNPC( spawnmenuclass, pos, wep )
+    local npc = ents.CreateSpawnMenuNPC( spawnmenuclass, pos )
+    if IsValid(npc) then
+
+        self:OnNPCSpawned( npc )
+
+        -- On remove call
+        npc:CallOnRemove("NPCMapSpawnerRmv", function()
+            self:OnRemoveNPC(npc)
+        end)
+
+    end
 
 
 
     return true
 
+end
+
+
+function NPCMS:OnNPCSpawned( npc )
+    -- Add to spawned table
+    table.insert(self.SpawnedNPCs, npc)
+end
+
+
+function NPCMS:OnRemoveNPC( npc )
+    -- Remove from spawned table
+    table.RemoveByValue(self.SpawnedNPCs, npc)
 end
