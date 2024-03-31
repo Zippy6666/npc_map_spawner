@@ -1,3 +1,12 @@
+local NPC_Limit = 125 -- How many NPCs is a preset allowed to have
+
+
+-- Should be adjusted according to NPC_Limit
+-- https://wiki.facepunch.com/gmod/net.WriteUInt
+local NPC_Limit_BitCount = 7
+
+
+
 if CLIENT then
     NPCMS.NPCMenu = NPCMS.NPCMenu or {}
 
@@ -23,10 +32,9 @@ if CLIENT then
         self.NPC_List:SetHeight(400)
         self.NPC_List:Dock(TOP)
         self.NPC_List:DockMargin(10, 10, 10, 10)
+        self.NPC_List:AddColumn("i")
         self.NPC_List:AddColumn("Name")
-        self.NPC_List:AddColumn("MenuCls")
-        self.NPC_List:AddColumn("Cls")
-        self.NPC_List:AddColumn("1/X")
+        self.NPC_List:SetMultiSelect(false)
 
 
         -- Refresh list
@@ -50,19 +58,9 @@ if CLIENT then
 
     end
 
-    function NPCMS.NPCMenu:GetSelectedPreset()
-        return self.PresetBox:GetSelected() or self.LastPresetChoice or "default"
-    end
-
-
-        -- Adds NPCs to the client's list
-    function NPCMS.NPCMenu:AddNPCToList( spawnmenuclass )
-        local npclist = conv.getSpawnMenuNPCs()
-        local npctbl = npclist[spawnmenuclass]
-        if npctbl then
-            self.NPC_List:AddLine( npctbl.Name, spawnmenuclass, npctbl.Class, 1 )
-        end
-    end
+    -- function NPCMS.NPCMenu:GetSelectedPreset()
+    --     return self.PresetBox:GetSelected() or self.LastPresetChoice or "default"
+    -- end
 
 
     function NPCMS.NPCMenu:ClearList()
@@ -72,12 +70,42 @@ if CLIENT then
     end
 
 
+        -- Adds NPCs to the client's list
+    function NPCMS.NPCMenu:AddNPCToList( data )
+        local npclist = conv.getSpawnMenuNPCs()
+        local npctbl = npclist[data.spawnmenuclass]
+        if !npctbl then return end
+
+
+        local line = self.NPC_List:AddLine( data.server_idx, npctbl.Name )
+        line.OnRightClick = function()
+
+            -- NPC line options
+            local options = DermaMenu()
+            options:AddOption("Remove", function()
+                net.Start("NPCMS_RemoveNPC")
+                net.WriteUInt(data.server_idx, NPC_Limit_BitCount)
+                net.SendToServer()
+            end)
+            options:AddOption("Settings", function()
+
+            end)
+            options:Open()
+    
+        end
+    end
+
+
+
         -- Add NPC to list from spawnmenu by player
     net.Receive("NPCMS_AddNPCToList", function()
         local spawnmenuclass = net.ReadString()
+        local server_idx = net.ReadUInt(NPC_Limit_BitCount)
+
+        local data = {spawnmenuclass=spawnmenuclass, server_idx=server_idx}
+
         if NPCMS && NPCMS.NPCMenu && NPCMS.NPCMenu.NPC_List then
-            NPCMS.NPCMenu:AddNPCToList( spawnmenuclass )
-            -- chat.AddText(chatcol1, )
+            NPCMS.NPCMenu:AddNPCToList( data )
         end
     end)
 
@@ -173,22 +201,29 @@ if SERVER then
     util.AddNetworkString("NPCMS_AddNPCToList")
     util.AddNetworkString("NPCMS_ClearNPCList")
     util.AddNetworkString("NPCMS_Refresh")
+    util.AddNetworkString("NPCMS_RemoveNPC")
 
 
-    net.Receive("NPCMS_Refresh", function(_, ply)
-        if !ply:IsSuperAdmin() then return end
-
+    function NPCMS:RefreshClientNPCList( ply )
         net.Start("NPCMS_ClearNPCList")
         net.Send(ply)
 
 
-        for _, v in ipairs(NPCMS.CurrentSpawnableNPCs) do
+        for k, v in ipairs(NPCMS.CurrentSpawnableNPCs) do
             if v.npcmenucls then
                 net.Start("NPCMS_AddNPCToList")
                 net.WriteString(v.npcmenucls)
+                net.WriteUInt(k, NPC_Limit_BitCount)
                 net.Send(ply)
             end
         end
+
+    end
+
+
+    net.Receive("NPCMS_Refresh", function(_, ply)
+        if !ply:IsSuperAdmin() then return end
+        NPCMS:RefreshClientNPCList( ply )
     end)
 
 
@@ -204,25 +239,45 @@ if SERVER then
     end)
 
 
+    net.Receive("NPCMS_RemoveNPC", function(_, ply)
+        if !ply:IsSuperAdmin() then return end
+
+        local idx = net.ReadUInt(NPC_Limit_BitCount)
+        local spawnmenuclass = NPCMS.CurrentSpawnableNPCs[idx] && NPCMS.CurrentSpawnableNPCs[idx].npcmenucls
+
+        if spawnmenuclass then
+            table.remove(NPCMS.CurrentSpawnableNPCs, idx)
+            PrintMessage(HUD_PRINTTALK, "NPC MAP SPAWNER: Removed '"..spawnmenuclass.."' from the current preset.")
+            NPCMS:RefreshClientNPCList( ply )
+        end
+    end)
+
+
         -- Adds to the table and broadcasts to all clients so that the NPC shows up in their lists if available
     function NPCMS:AddToCurrentSpawnableNPCs(spawnmenuclass)
 
-        net.Start("NPCMS_AddNPCToList")
-        net.WriteString(spawnmenuclass)
-        net.Broadcast()
+        local spawndata = {npcmenucls = spawnmenuclass}
+        local idx = table.insert(self.CurrentSpawnableNPCs, spawndata)
 
-        local spawndata = {
-            npcmenucls = spawnmenuclass
-        }
-        table.insert(self.CurrentSpawnableNPCs, spawndata)
 
         PrintMessage(HUD_PRINTTALK, "NPC MAP SPAWNER: Added '"..spawnmenuclass.."' to the current preset.")
+
+
+        net.Start("NPCMS_AddNPCToList")
+        net.WriteString(spawnmenuclass)
+        net.WriteUInt(idx, NPC_Limit_BitCount)
+        net.Broadcast()
 
     end
 
 
         -- Select NPCs to add to the NPC list when clicking the icons in the spawnmenu
     hook.Add("PlayerSpawnNPC", "NPCMapSpawner_Selecting", function( ply, npc_type, wep )
+        if #NPCMS.CurrentSpawnableNPCs >= NPC_Limit then
+            PrintMessage(HUD_PRINTTALK, "NPC MAP SPAWNER: Cannot add any more NPCs to this preset! Limit reached ("..NPC_Limit..")")
+            return false
+        end
+
         if ply.NPCMS_NPCSelectingEnabled then
 
             NPCMS:AddToCurrentSpawnableNPCs(npc_type)
