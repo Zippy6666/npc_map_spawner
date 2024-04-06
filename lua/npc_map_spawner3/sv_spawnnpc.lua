@@ -66,7 +66,8 @@ end
 
     -- Get an appropriate position to spawn this NPC on
 function NPCMS:GoodNPCPos( spawnmenuclass, nodepos )
-    return nodepos
+    local mins = self.NPCColCache[spawnmenuclass][1]
+    return nodepos+Vector(0, 0, math.abs(mins.z))
 end
 
 
