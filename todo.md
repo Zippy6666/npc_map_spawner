@@ -2,12 +2,14 @@
 - [x] Remove from list
 - [x] Refresh list
 - [x] Reset settings button
-
+- [x] Presets
+    - [ ] Read and put in dropdown
+    - [ ] Overwrite message box
 
 
 # Ideas
 - No distance check option
-- Presets
+
 - Despawn/teleport
 - Ability to write lua code on the npcs in-game (and maybe a simpler version that just allows you to input method names, and arguments, such as SetHealth and Give etc)
 - An option called "Group allies", it will cause allies to teleport to each others proximity and join each others squad

@@ -146,9 +146,9 @@ if CLIENT then
 
             if entry:GetText() == "default" then return end
 
-            -- net.Start("ZippyHorde_NewPreset")
-            -- net.WriteString(entry:GetText())
-            -- net.SendToServer()
+            net.Start("NPCMS_AddPreset")
+            net.WriteString(entry:GetText())
+            net.SendToServer()
 
             frame:Close()
 
@@ -190,10 +190,6 @@ if CLIENT then
         remove_button:SetText("Remove")
         remove_button.DoClick = function()
 
-            -- net.Start("ZippyHorde_RemovePreset")
-            -- net.WriteString(presetName)
-            -- net.SendToServer()
-
             frame:Close()
 
         end
@@ -211,6 +207,7 @@ if SERVER then
     util.AddNetworkString("NPCMS_ClearNPCList")
     util.AddNetworkString("NPCMS_Refresh")
     util.AddNetworkString("NPCMS_RemoveNPC")
+    util.AddNetworkString("NPCMS_AddPreset")
 
 
     -- A table containing SPAWNDATAs
@@ -276,6 +273,23 @@ if SERVER then
         end
 
     end
+
+
+        -- Create a new preset of the current NPCs
+    net.Receive("NPCMS_AddPreset", function()
+        
+        -- Create folder with all the presets if there isnt any
+        if !file.Exists("npcms_presets", "DATA") then
+            file.CreateDir("npcms_presets")
+        end
+
+
+        -- Write new preset file
+        local newPresetName = "npcms_presets/"..net.ReadString()..".json"
+        file.Write(newPresetName, util.TableToJSON(NPCMS.CurrentSpawnableNPCs, true))
+        PrintMessage(HUD_PRINTTALK, "NPC MAP SPAWNER: Saved preset '"..newPresetName.."'")
+
+    end)
 
 
     net.Receive("NPCMS_Refresh", function(_, ply)
