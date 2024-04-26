@@ -12,6 +12,9 @@ if CLIENT then
 
 
     local chatcol1 = Color(75, 255, 0)
+    local chatcol2 = Color(255, 75, 0)
+
+
 
         -- The NPC List menu
     function NPCMS.NPCMenu:CreateNPCMenu(panel)
@@ -20,7 +23,14 @@ if CLIENT then
         self.PresetBox:SetHeight(25)
         self.PresetBox:Dock(TOP)
         self.PresetBox:DockMargin(10, 10, 10, 10)
+        self:CallPopulatePresetBox()
+        function self.PresetBox:OnSelect(_, _, presetFile)
+            net.Start("NPCMP_SelectPreset")
+            net.WriteString(presetFile)
+            net.SendToServer()
+        end
 
+    
 
         local buttonAddPreset = panel:Button("Add Preset")
         buttonAddPreset.DoClick = function()
@@ -68,6 +78,21 @@ if CLIENT then
 
     end
 
+
+    function NPCMS.NPCMenu:CallPopulatePresetBox()
+        net.Start("NPCMS_TellServerFetchPresets")
+        net.SendToServer()
+    end
+
+
+    net.Receive("NPCMS_SendPresetNameToCl", function()
+        if !NPCMS.NPCMenu.PresetBox then return end
+        local f = net.ReadString()
+        local presetName = string.Replace(f, ".json", "")
+        NPCMS.NPCMenu.PresetBox:AddChoice(presetName, f)
+    end)
+
+
     function NPCMS.NPCMenu:GetSelectedPreset()
         return self.PresetBox:GetSelected() -- or self.LastPresetChoice or "default"
     end
@@ -84,7 +109,10 @@ if CLIENT then
     function NPCMS.NPCMenu:AddNPCToList( data )
         local npclist = conv.getSpawnMenuNPCs()
         local npctbl = npclist[data.spawnmenuclass]
-        if !npctbl then return end
+        if !npctbl then
+            chat.AddText(chatcol2, "NPC MAP SPAWNER: Could not find '"..data.spawnmenuclass.."', addon missing?")
+            return
+        end
 
 
         local line = self.NPC_List:AddLine( data.server_idx, npctbl.Name )
@@ -208,6 +236,9 @@ if SERVER then
     util.AddNetworkString("NPCMS_Refresh")
     util.AddNetworkString("NPCMS_RemoveNPC")
     util.AddNetworkString("NPCMS_AddPreset")
+    util.AddNetworkString("NPCMS_TellServerFetchPresets")
+    util.AddNetworkString("NPCMS_SendPresetNameToCl")
+    util.AddNetworkString("NPCMP_SelectPreset")
 
 
     -- A table containing SPAWNDATAs
@@ -323,6 +354,32 @@ if SERVER then
             return false
     
         end
+    end)
+
+
+    net.Receive("NPCMS_TellServerFetchPresets", function(_, ply)
+        if !ply:IsSuperAdmin() then return end
+
+
+        local files = file.Find("npcms_presets/*", "DATA")
+
+        for _, f in ipairs(files) do
+            net.Start("NPCMS_SendPresetNameToCl")
+            net.WriteString(f)
+            net.Send(ply)
+        end
+    end)
+
+
+    net.Receive("NPCMP_SelectPreset", function(_, ply)
+        if !ply:IsSuperAdmin() then return end
+
+        local pfile = "npcms_presets/"..net.ReadString()
+        if file.Exists(pfile, "DATA") then
+            NPCMS.CurrentSpawnableNPCs = util.JSONToTable( file.Read(pfile, "DATA") )
+            PrintMessage(HUD_PRINTTALK, "NPC MAP SPAWNER: Selected preset '"..pfile.."'")
+        end
+        NPCMS:RefreshClientNPCList(ply)
     end)
 
 end
