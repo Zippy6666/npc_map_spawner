@@ -107,8 +107,14 @@ if CLIENT then
 
         -- Adds NPCs to the client's list
     function NPCMS.NPCMenu:AddNPCToList( data )
-        local npclist = conv.getSpawnMenuNPCs()
+        local npclist = list.Get("NPC")
+
+        if ZBaseInstalled then
+            table.Merge(npclist, table.Copy(ZBaseNPCs))
+        end
+
         local npctbl = npclist[data.spawnmenuclass]
+
         if !npctbl then
             chat.AddText(chatcol2, "NPC MAP SPAWNER: Could not find '"..data.spawnmenuclass.."', addon missing?")
             return
