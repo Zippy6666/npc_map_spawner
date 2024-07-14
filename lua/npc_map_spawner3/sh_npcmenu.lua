@@ -29,6 +29,7 @@ if CLIENT then
             net.WriteString(presetFile)
             net.SendToServer()
         end
+        local PresetBox = self.PresetBox
 
     
 
@@ -54,6 +55,20 @@ if CLIENT then
         self.NPC_List:AddColumn("Name")
         self.NPC_List:SetMultiSelect(false)
         
+        local buttonSavePreset = panel:Button("Save Preset")
+        function buttonSavePreset:DoClick()
+            -- Save current preset if any
+            local preset = NPCMS.NPCMenu:GetSelectedPreset()
+            if preset && isstring(preset) && preset != "" then
+                PresetBox:Clear()
+                net.Start("NPCMS_AddPreset")
+                net.WriteString(preset)
+                net.SendToServer()
+            else
+                chat.AddText(chatcol2, "NPC MAP SPAWNER: No preset selected!")
+            end
+        end
+
 
 
         -- Refresh list
@@ -121,25 +136,29 @@ if CLIENT then
         end
 
 
-        local line = self.NPC_List:AddLine( data.server_idx, npctbl.Name )
-        line.OnRightClick = function()
+        if self.NPC_List && self.NPC_List.AddLine then
+            local line = self.NPC_List:AddLine( data.server_idx, npctbl.Name )
+            line.OnRightClick = function()
 
-            -- NPC line options
-            local options = DermaMenu()
-            options:AddOption("Remove", function()
-                net.Start("NPCMS_RemoveNPC")
-                net.WriteUInt(data.server_idx, NPC_Limit_BitCount)
-                net.SendToServer()
-            end)
-            options:AddOption("Settings", function()
+                -- NPC line options
+                local options = DermaMenu()
+                options:AddOption("Remove", function()
 
-            end)
-            options:Open()
-    
+                    net.Start("NPCMS_RemoveNPC")
+                    net.WriteUInt(data.server_idx, NPC_Limit_BitCount)
+                    net.SendToServer()
+
+                end)
+                options:AddOption("Settings", function()
+
+                end)
+                options:Open()
+        
+            end
+
+            -- Sort by NPC name
+            self.NPC_List:SortByColumn( 2 )
         end
-
-        -- Sort by NPC name
-        self.NPC_List:SortByColumn( 2 )
     end
 
 
@@ -152,7 +171,9 @@ if CLIENT then
         local data = {spawnmenuclass=spawnmenuclass, server_idx=server_idx}
 
         if NPCMS && NPCMS.NPCMenu && NPCMS.NPCMenu.NPC_List then
+
             NPCMS.NPCMenu:AddNPCToList( data )
+
         end
     end)
 
