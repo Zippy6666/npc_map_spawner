@@ -289,7 +289,7 @@ if SERVER then
 
 
         -- Notify
-        PrintMessage(HUD_PRINTTALK, "NPC MAP SPAWNER: Added '"..SPAWNDATA.menucls.."' to the current preset.")
+        PrintMessage(HUD_PRINTTALK, "NPC MAP SPAWNER: Added '"..SPAWNDATA.menucls.."' to the spawner.")
 
 
         -- Update lists
@@ -311,7 +311,6 @@ if SERVER then
 
         if spawnmenuclass then
             table.remove(NPCMS.CurrentSpawnableNPCs, idx)
-            PrintMessage(HUD_PRINTTALK, "NPC MAP SPAWNER: Removed '"..spawnmenuclass.."' from the current preset.")
             NPCMS:RefreshClientNPCList( ply )
         end
     end)
