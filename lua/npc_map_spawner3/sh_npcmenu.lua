@@ -180,6 +180,10 @@ if CLIENT then
 
             if entry:GetText() == "default" then return end
 
+            if self.PresetBox then
+                self.PresetBox:Clear()
+            end
+
             net.Start("NPCMS_AddPreset")
             net.WriteString(entry:GetText())
             net.SendToServer()
@@ -209,24 +213,21 @@ if CLIENT then
     end
 
 
-    function NPCMS:RemovePreset()
+    function NPCMS.NPCMenu:RemovePreset()
         local presetName = NPCMS.NPCMenu:GetSelectedPreset()
-
         if !presetName then return end
-        if presetName == "default" then return end
 
+        local frame = Derma_Query("Remove \""..presetName.."\" permanently?", "Remove Preset", "Remove", function()
 
-        local frame = Derma_Message("Remove \""..presetName.."\" permanently?", "Remove Preset", "Remove")
+            if self.PresetBox then
+                self.PresetBox:Clear()
+            end
 
-        -- Button that removes the group:
-        local remove_button = vgui.Create("DButton",frame)
-        remove_button:Dock(BOTTOM)
-        remove_button:SetText("Remove")
-        remove_button.DoClick = function()
+            net.Start("NPCMS_RemovePreset")
+            net.WriteString(presetName)
+            net.SendToServer()
 
-            frame:Close()
-
-        end
+        end, "Keep")
     end
 
 end
@@ -242,6 +243,7 @@ if SERVER then
     util.AddNetworkString("NPCMS_Refresh")
     util.AddNetworkString("NPCMS_RemoveNPC")
     util.AddNetworkString("NPCMS_AddPreset")
+    util.AddNetworkString("NPCMS_RemovePreset")
     util.AddNetworkString("NPCMS_TellServerFetchPresets")
     util.AddNetworkString("NPCMS_SendPresetNameToCl")
     util.AddNetworkString("NPCMP_SelectPreset")
@@ -294,6 +296,15 @@ if SERVER then
     end)
 
 
+    function NPCMS:RefreshPresetsToClient( ply )
+        local files = file.Find("npcms_presets/*", "DATA")
+
+        for _, f in ipairs(files) do
+            net.Start("NPCMS_SendPresetNameToCl")
+            net.WriteString(f)
+            net.Send(ply)
+        end
+    end
 
 
 
@@ -313,7 +324,7 @@ if SERVER then
 
 
         -- Create a new preset of the current NPCs
-    net.Receive("NPCMS_AddPreset", function()
+    net.Receive("NPCMS_AddPreset", function(_, ply)
         
         -- Create folder with all the presets if there isnt any
         if !file.Exists("npcms_presets", "DATA") then
@@ -325,6 +336,22 @@ if SERVER then
         local newPresetName = "npcms_presets/"..net.ReadString()..".json"
         file.Write(newPresetName, util.TableToJSON(NPCMS.CurrentSpawnableNPCs, true))
         PrintMessage(HUD_PRINTTALK, "NPC MAP SPAWNER: Saved preset '"..newPresetName.."'")
+
+        NPCMS:RefreshPresetsToClient(ply)
+
+    end)
+
+
+        -- Create a new preset of the current NPCs
+    net.Receive("NPCMS_RemovePreset", function(_, ply)
+    
+        if !file.Exists("npcms_presets", "DATA") then return end
+
+        local presetPath = "npcms_presets/"..net.ReadString()..".json"
+        file.Delete(presetPath, "DATA")
+        PrintMessage(HUD_PRINTTALK, "NPC MAP SPAWNER: Removed preset '"..presetPath.."'")
+
+        NPCMS:RefreshPresetsToClient(ply)
 
     end)
 
@@ -366,14 +393,7 @@ if SERVER then
     net.Receive("NPCMS_TellServerFetchPresets", function(_, ply)
         if !ply:IsSuperAdmin() then return end
 
-
-        local files = file.Find("npcms_presets/*", "DATA")
-
-        for _, f in ipairs(files) do
-            net.Start("NPCMS_SendPresetNameToCl")
-            net.WriteString(f)
-            net.Send(ply)
-        end
+        NPCMS:RefreshPresetsToClient(ply)
     end)
 
 
