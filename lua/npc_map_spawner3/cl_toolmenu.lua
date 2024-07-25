@@ -1,6 +1,6 @@
 -- Tool/options menu
 
-hook.Add("PopulateToolMenu", "NPCSpawner", function()
+hook.Add("PopulateToolMenu", "NPCMS3", function()
 
     spawnmenu.AddToolMenuOption("Utilities", "AI", "NPC Map Spawner", "NPC Map Spawner", "", "", function(panel)
 
@@ -33,9 +33,6 @@ hook.Add("PopulateToolMenu", "NPCSpawner", function()
             net.Start("NPCMS_ResetSettings")
             net.SendToServer()
         end
-
-
-        
         
     end)
 
