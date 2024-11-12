@@ -123,9 +123,14 @@ function NPCMS:GetNodePositions()
 
 	if !nodegraph then
         -- No nodegraph, give an empty table
+		MsgN("NPCMS did not detect any nodegraph.")
 		return {}
 	end
 
+	if table.IsEmpty(nodegraph) then
+		MsgN("NPCMS fetched an empty nodegraph...")
+	end
+	
 
     -- Nodes retrieved, return table of positions
 	local node_positions = {}
@@ -156,7 +161,7 @@ function NPCMS:GetAugmentedNodePositions()
 
 
 		-- Water check, we dont want spawn positions in water
-		if bit.bor(util.PointContents(pos), CONTENTS_WATER) == CONTENTS_WATER then
+		if bit.band(util.PointContents(pos), CONTENTS_WATER) == CONTENTS_WATER then
 			continue
 		end
 
@@ -168,6 +173,7 @@ function NPCMS:GetAugmentedNodePositions()
 			mask = MASK_NPCWORLDSTATIC,
 		})
 		if !groundDistCheck.Hit then
+			print("failed ground check")
 			continue
 		end
 
@@ -186,13 +192,18 @@ concommand.Add("npc_map_spawner_reload_nodes", function()
 
 	NPCMS.NodePositions = NPCMS:GetAugmentedNodePositions()
 
-	for _, v in ipairs(NPCMS.NodePositions) do
-		if dev:GetBool() then
+	if table.IsEmpty(NPCMS.NodePositions) then
+		MsgN("No nodes...")
+	end
+
+	if dev:GetBool() then
+		for _, v in ipairs(NPCMS.NodePositions) do
 			local test = ents.Create("base_gmodentity")
 			test:SetModel("models/hunter/blocks/cube025x025x025.mdl")
 			test:SetMaterial("models/wireframe")
 			test:SetPos(v)
 			test:SetColor(green)
+			test:DrawShadow(false)
 			test:Spawn()
 			SafeRemoveEntityDelayed(test, 5)
 		end
