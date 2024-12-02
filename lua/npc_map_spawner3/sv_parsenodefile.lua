@@ -173,7 +173,6 @@ function NPCMS:GetAugmentedNodePositions()
 			mask = MASK_NPCWORLDSTATIC,
 		})
 		if !groundDistCheck.Hit then
-			print("failed ground check")
 			continue
 		end
 
