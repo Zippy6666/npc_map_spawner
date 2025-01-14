@@ -149,6 +149,13 @@ if CLIENT then
         
             end
 
+            local tooltip = ""
+            for k, v in pairs(data) do
+                tooltip = tooltip..k..": "..tostring(v).."\n"
+            end
+            line:SetTooltip(tooltip)
+            line:SetTooltipDelay(0)
+
             -- Sort by NPC name
             self.NPC_List:SortByColumn( 2 )
         end
