@@ -14,7 +14,7 @@ end
 
     -- Create cvars
 createCVAR("enable", "0")
-createCVAR("show_info", "0")
+createCVAR("show_info", "1")
 createCVAR("cooldown", "3")
 createCVAR("poscount", "3")
 createCVAR("maxnpcs", "50")
@@ -36,6 +36,7 @@ if SERVER then
         if !ply:IsSuperAdmin() then return end
 
         for _, cvar in ipairs(NPCMS.Cvars) do
+            if cvar:GetName() == cvarPrefix.."enable" then continue end -- Don't toggle enabled on reset
             cvar:Revert()
         end
     
