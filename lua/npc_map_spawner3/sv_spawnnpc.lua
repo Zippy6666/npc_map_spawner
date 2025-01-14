@@ -6,7 +6,7 @@ local dev = GetConVar("developer")
 local NPC = FindMetaTable("NPC")
 
 
-NPCMS.SpawnedNPCs = {}
+NPCMS.SpawnedNPCs = NPCMS.SpawnedNPCs or {}
 NPCMS.NPCColCache = {} -- Table of NPC collisions
 NPCMS.CollisionsBeingCached = {}
 
@@ -64,7 +64,7 @@ end
 
 
     -- Try spawning an NPC of type 'spawnmenuclass' at 'nodepos'
-function NPCMS:SpawnNPC( spawnmenuclass, nodepos )
+function NPCMS:SpawnNPC( spawnmenuclass, nodepos, SPAWNDATA )
     if !self.NPCColCache[spawnmenuclass] then
         -- Cache collisions first
         if !self.CollisionsBeingCached[spawnmenuclass] then
@@ -86,7 +86,17 @@ function NPCMS:SpawnNPC( spawnmenuclass, nodepos )
     end
 
     -- Spawn the NPC
-    local npc = ents.CreateSpawnMenuNPC( spawnmenuclass, pos )
+    local npc = conv.createSpawnMenuNPC( spawnmenuclass, pos, nil, function( thisNPC )
+        if SPAWNDATA.code && #SPAWNDATA.code > 0 then
+            local gselfbefore = _G["self"]
+            _G["self"] = thisNPC
+            local err = RunString(SPAWNDATA.code, "ERROR!! ur dumb spawner code:", false)
+            if err then PrintMessage(HUD_PRINTTALK, err) end
+            _G["self"] = gselfbefore
+        end
+    end)
+
+
     if IsValid(npc) then
 
         self:OnNPCSpawned( npc )

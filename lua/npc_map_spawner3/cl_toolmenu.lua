@@ -28,8 +28,14 @@ hook.Add("PopulateToolMenu", "NPCMS3", function()
         panel:CheckBox("Visibility Check", "npc_map_spawner_visibility")
         panel:ControlHelp("Do a visibility check when finding a spawn position. If the spawn position can be seen by a player, it will be discarded.")
 
-        local button = panel:Button("Reset Settings")
-        function button:DoClick()
+        local buttonremoveall = panel:Button("Clear Spawned NPCs")
+        function buttonremoveall:DoClick()
+            net.Start("NPCMS_RemoveAllNPCs")
+            net.SendToServer()
+        end
+
+        local buttonreset = panel:Button("Reset Settings")
+        function buttonreset:DoClick()
             net.Start("NPCMS_ResetSettings")
             net.SendToServer()
         end

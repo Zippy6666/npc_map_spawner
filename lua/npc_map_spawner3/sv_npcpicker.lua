@@ -13,5 +13,5 @@ function NPCMS:GetNPCClsToSpawn()
 
     local SPAWNDATA = legalNPCs[math.random(1, #legalNPCs)]
 
-    return SPAWNDATA.menucls
+    return SPAWNDATA.menucls, SPAWNDATA
 end

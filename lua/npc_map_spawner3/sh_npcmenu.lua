@@ -262,6 +262,7 @@ if SERVER then
     util.AddNetworkString("NPCMS_SendPresetNameToCl")
     util.AddNetworkString("NPCMS_SelectPreset")
     util.AddNetworkString("NPCMS_ChangeNPCSettings")
+    util.AddNetworkString("NPCMS_RemoveAllNPCs")
 
 
     -- A table containing SPAWNDATAs
@@ -276,6 +277,7 @@ if SERVER then
         local SPAWNDATA = {}
         SPAWNDATA.menucls = menucls
         SPAWNDATA.chance = 1
+        SPAWNDATA.code = ""
 
         -- Insert spawn data into table
         local idx = table.insert(self.CurrentSpawnableNPCs, SPAWNDATA)
@@ -437,6 +439,12 @@ if SERVER then
         NPCMS:RefreshClientNPCList(ply)
     end)
 
+
+    net.Receive("NPCMS_RemoveAllNPCs", function()
+        for k, v in ipairs(NPCMS.SpawnedNPCs) do
+            if IsValid(v) then v:Remove() end
+        end
+    end)
 end
 
 

@@ -29,9 +29,9 @@ function NPCMS:SpawnRoutine()
     -- Get spawn positions
     local spawnpositions = self:FindDesiredSpawnPositions(self.cvar_poscount:GetInt())
     for _, v in ipairs(spawnpositions) do
-        local cls = self:GetNPCClsToSpawn()
+        local cls, SPAWNDATA = self:GetNPCClsToSpawn()
         if cls then
-            self:SpawnNPC( cls, v ) -- Spawn on each spawn position
+            self:SpawnNPC( cls, v, SPAWNDATA ) -- Spawn on each spawn position
         end
     end
 

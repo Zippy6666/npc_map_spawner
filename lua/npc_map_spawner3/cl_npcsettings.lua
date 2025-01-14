@@ -21,18 +21,24 @@ function NPCMS.NPCMenu:OpenSettings( npc_reported_cur_settings )
     local newsettings = table.Copy(npc_reported_cur_settings)
 
     -- Base frame
-    local width = 750
-    local frame = vgui.Create("DFrame")
-    frame:SetSize(width, 400)
-    frame:SetTitle("NPC Settings")
-    frame:Center()
-    frame:MakePopup()
+    local width = ScrW()*0.75
+    local height = ScrH()*0.75
+    self.SettingsFrame = vgui.Create("DFrame")
+    self.SettingsFrame:SetSize(width, height)
+    self.SettingsFrame:SetTitle("NPC Settings")
+    self.SettingsFrame:Center()
+    self.SettingsFrame:MakePopup()
+    self.SettingsFrame.OnKeyCodePressed = function( _, key )
+        if key == KEY_ENTER then
+            self:SaveSettings(newsettings)
+        end
+    end
 
     -- Panel shit
     local panelmargins = 3
     local panels = {}
     for i = 1, numPanels do
-        local panel = vgui.Create("DPanel", frame)
+        local panel = vgui.Create("DPanel", self.SettingsFrame)
         panel:SetWidth(width/numPanels - panelmargins*2 - 2)
         panel:DockMargin(panelmargins,panelmargins,panelmargins,panelmargins)
         panel:Dock(LEFT)
@@ -48,13 +54,35 @@ function NPCMS.NPCMenu:OpenSettings( npc_reported_cur_settings )
         newsettings.chance = value
     end
 
+    -- Coding panel
+    self.CodeEntry = self:CreateVGUITitled("DTextEntry", pnl2, "LUA to execute on spawn, the NPC is 'self'.")
+    self.CodeEntry:SetHeight(height*0.75)
+    self.CodeEntry:SetMultiline(true)
+    self.CodeEntry:SetFont("TargetIDSmall")
+    self.CodeEntry:SetTextColor(Color(180, 180, 160))
+    self.CodeEntry:SetTabbingDisabled( true )
+    self.CodeEntry:SetPlaceholderText("self:Give('weapon_pistol')")
+    self.CodeEntry:SetText(npc_reported_cur_settings.code)
+
+
     -- Save button
     local savebutton = self:CreateVGUITitled("DButton", pnl3, "Save the settings.", BOTTOM)
     savebutton:SetText("Save")
     savebutton.DoClick = function()
-        net.Start("NPCMS_ChangeNPCSettings")
-        net.WriteTable(newsettings)
-        net.SendToServer()
-        frame:Close()
+        self:SaveSettings(newsettings)
     end
+end
+
+
+function NPCMS.NPCMenu:SaveSettings( newsettings )
+    -- Save code
+    newsettings.code = self.CodeEntry:GetText()
+
+    -- Send to server
+    net.Start("NPCMS_ChangeNPCSettings")
+    net.WriteTable(newsettings)
+    net.SendToServer()
+
+    -- Close
+    self.SettingsFrame:Close()
 end
