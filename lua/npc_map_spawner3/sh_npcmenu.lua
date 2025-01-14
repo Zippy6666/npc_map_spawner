@@ -17,14 +17,18 @@ if CLIENT then
         self.PresetBox:Dock(TOP)
         self.PresetBox:DockMargin(10, 10, 10, 10)
         self:CallPopulatePresetBox()
+
         function self.PresetBox:OnSelect(_, _, presetFile)
+            if !isstring(presetFile) then return end
+            
             net.Start("NPCMS_SelectPreset")
             net.WriteString(presetFile)
             net.SendToServer()
         end
         local PresetBox = self.PresetBox
 
-        self.PresetBox:AddChoice("NONE", "NONE")
+        self.PresetBox:AddChoice("Empty", "Empty")
+        self.PresetBox:ChooseOptionID(1)
 
         local buttonAddPreset = panel:Button("Add Preset")
         buttonAddPreset.DoClick = function()
@@ -49,11 +53,13 @@ if CLIENT then
         self.NPC_List:SetMultiSelect(false)
         
         local buttonSavePreset = panel:Button("Save Preset")
-        function buttonSavePreset:DoClick()
+        buttonSavePreset.DoClick = function()
             -- Save current preset if any
             local preset = NPCMS.NPCMenu:GetSelectedPreset()
-            if preset && isstring(preset) && preset != "" then
-                PresetBox:Clear()
+            if preset && isstring(preset) && preset != "" && presetName!= "Empty" then
+                print("fed", preset)
+                self:ClearPresets(preset)
+
                 net.Start("NPCMS_AddPreset")
                 net.WriteString(preset)
                 net.SendToServer()
@@ -178,6 +184,22 @@ if CLIENT then
     end)
 
 
+    function NPCMS.NPCMenu:ClearPresets( presetToSelectAfterClear )
+        if self.PresetBox then
+            self.PresetBox:Clear()
+            self.PresetBox:AddChoice("Empty", "Empty")
+        end
+
+        if presetToSelectAfterClear then
+            timer.Simple(0.2, function()
+                if self && self.PresetBox then
+                    self.PresetBox:ChooseOption(presetToSelectAfterClear)
+                end
+            end)
+        end
+    end
+
+
     function NPCMS.NPCMenu:AddPreset()
         local frame = vgui.Create("DFrame")
         local width = 350
@@ -192,11 +214,10 @@ if CLIENT then
 
         local function finish()
 
-            if entry:GetText() == "default" then return end
+            if string.lower( entry:GetText() ) == "default" then return end
+            if string.lower( entry:GetText() ) == "empty" then return end
 
-            if self.PresetBox then
-                self.PresetBox:Clear()
-            end
+            self:ClearPresets(entry:GetText())
 
             net.Start("NPCMS_AddPreset")
             net.WriteString(entry:GetText())
@@ -230,12 +251,11 @@ if CLIENT then
     function NPCMS.NPCMenu:RemovePreset()
         local presetName = NPCMS.NPCMenu:GetSelectedPreset()
         if !presetName then return end
+        if presetName == "Empty" then return end
 
         local frame = Derma_Query("Remove \""..presetName.."\" permanently?", "Remove Preset", "Remove", function()
 
-            if self.PresetBox then
-                self.PresetBox:Clear()
-            end
+            self:ClearPresets("Empty")
 
             net.Start("NPCMS_RemovePreset")
             net.WriteString(presetName)
@@ -243,6 +263,36 @@ if CLIENT then
 
         end, "Keep")
     end
+
+
+    net.Receive("NPCMS_DoAddNPCFromSpawnMenu", function()
+        local npc_type = net.ReadString()
+        local wep = net.ReadString()
+
+        -- Truly one of the code
+        local shouldPutInList = false
+
+        local npclistExists = NPCMS
+        && NPCMS.NPCMenu
+        && NPCMS.NPCMenu.NPC_List
+
+        local cp = NPCMS.NPCMenu.NPC_List:GetParent()
+        :GetParent()
+        :GetParent()
+        :GetParent()
+        :GetParent()
+        local npcmsTabId = cp:GetTabID()
+        local Tab = g_SpawnMenu:GetToolMenu():GetToolPanel( npcmsTabId )
+        local isTabActive = Tab.PropertySheetTab:IsActive()
+
+        shouldPutInList = npclistExists && cp:GetTable().ActiveCPName == "NPC Map Spawner" && isTabActive
+
+        net.Start("NPCMS_DoAddNPCFromSpawnMenu")
+        net.WriteBool(shouldPutInList)
+        net.WriteString(npc_type)
+        net.WriteString(wep)
+        net.SendToServer()
+    end)
 
 end
 
@@ -263,7 +313,7 @@ if SERVER then
     util.AddNetworkString("NPCMS_SelectPreset")
     util.AddNetworkString("NPCMS_ChangeNPCSettings")
     util.AddNetworkString("NPCMS_RemoveAllNPCs")
-
+    util.AddNetworkString("NPCMS_DoAddNPCFromSpawnMenu")
 
     -- A table containing SPAWNDATAs
     -- Spawn data contains all info about an NPC that can be spawned (menu class, chance, etc)
@@ -357,12 +407,10 @@ if SERVER then
 
         -- Create a new preset of the current NPCs
     net.Receive("NPCMS_AddPreset", function(_, ply)
-        
         -- Create folder with all the presets if there isnt any
         if !file.Exists("npcms_presets", "DATA") then
             file.CreateDir("npcms_presets")
         end
-
 
         -- Write new preset file
         local newPresetName = "npcms_presets/"..net.ReadString()..".json"
@@ -370,7 +418,6 @@ if SERVER then
         PrintMessage(HUD_PRINTTALK, "NPC MAP SPAWNER: Saved preset '"..newPresetName.."'")
 
         NPCMS:RefreshPresetsToClient(ply)
-
     end)
 
 
@@ -399,25 +446,51 @@ if SERVER then
 
         if !ply:IsSuperAdmin() then return end
 
-        local Enabled = net.ReadBool() 
-        ply:SetNWBool("NPCMS_NPCSelectingEnabled", Enabled)
-        ply:PrintMessage(HUD_PRINTTALK, Enabled && "NPC MAP SPAWNER: NPC spawnmenu selecting enabled." or "NPC MAP SPAWNER: NPC Spawnmenu Selecting disabled.")
+        -- local Enabled = net.ReadBool() 
+        -- ply:SetNWBool("NPCMS_NPCSelectingEnabled", Enabled)
+        -- ply:PrintMessage(HUD_PRINTTALK, Enabled && "NPC MAP SPAWNER: NPC spawnmenu selecting enabled." or "NPC MAP SPAWNER: NPC Spawnmenu Selecting disabled.")
 
+    end)
+
+
+    net.Receive("NPCMS_DoAddNPCFromSpawnMenu", function(_, ply)
+        if ply:IsSuperAdmin() then
+            local shouldAddToMenu = net.ReadBool()
+            local npc_type = net.ReadString()
+            local wep = net.ReadString()
+
+            print(shouldAddToMenu)
+            
+            if shouldAddToMenu == true then
+                
+                if #NPCMS.CurrentSpawnableNPCs >= NPC_Limit then
+                    PrintMessage(HUD_PRINTTALK, "NPC MAP SPAWNER: Cannot add any more NPCs to this preset! Limit reached ("..NPC_Limit..")")
+                    return false
+                end
+
+                NPCMS:AddToCurrentSpawnableNPCs(npc_type)
+
+            else
+                ply:ConCommand("gmod_spawnnpc "..npc_type.." "..wep)
+                ply.DontAddSpawnmenuNPCToNPCMS = true
+                conv.devPrint("doing regular spawn")
+            end
+        end
     end)
 
 
         -- Select NPCs to add to the NPC list when clicking the icons in the spawnmenu
     hook.Add("PlayerSpawnNPC", "NPCMapSpawner_Selecting", function( ply, npc_type, wep )
-        if #NPCMS.CurrentSpawnableNPCs >= NPC_Limit then
-            PrintMessage(HUD_PRINTTALK, "NPC MAP SPAWNER: Cannot add any more NPCs to this preset! Limit reached ("..NPC_Limit..")")
-            return false
-        end
+        if !ply:IsSuperAdmin() then return end
 
-        if ply:GetNWBool("NPCMS_NPCSelectingEnabled") then
-
-            NPCMS:AddToCurrentSpawnableNPCs(npc_type)
+        if !ply.DontAddSpawnmenuNPCToNPCMS then
+            net.Start("NPCMS_DoAddNPCFromSpawnMenu")
+            net.WriteString(npc_type)
+            net.WriteString(wep)
+            net.Send(ply)
             return false
-    
+        else
+            ply.DontAddSpawnmenuNPCToNPCMS = false
         end
     end)
 
@@ -434,7 +507,7 @@ if SERVER then
 
         local str = net.ReadString()
 
-        if str == "NONE" then
+        if str == "Empty" then
             table.Empty(NPCMS.CurrentSpawnableNPCs)
             PrintMessage(HUD_PRINTTALK, "NPC MAP SPAWNER: No preset active.")
             NPCMS:RefreshClientNPCList(ply)
