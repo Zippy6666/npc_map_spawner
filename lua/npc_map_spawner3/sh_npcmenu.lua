@@ -264,16 +264,16 @@ if CLIENT then
         && NPCMS.NPCMenu
         && NPCMS.NPCMenu.NPC_List
 
-        local cp = NPCMS.NPCMenu.NPC_List:GetParent()
+        local cp = npclistExists && NPCMS.NPCMenu.NPC_List:GetParent()
         :GetParent()
         :GetParent()
         :GetParent()
         :GetParent()
-        local npcmsTabId = cp:GetTabID()
-        local Tab = g_SpawnMenu:GetToolMenu():GetToolPanel( npcmsTabId )
-        local isTabActive = Tab.PropertySheetTab:IsActive()
+        local npcmsTabId = cp && cp:GetTabID()
+        local Tab = npcmsTabId && g_SpawnMenu:GetToolMenu():GetToolPanel( npcmsTabId )
+        local isTabActive = Tab && Tab.PropertySheetTab:IsActive()
 
-        shouldPutInList = npclistExists && cp:GetTable().ActiveCPName == "NPC Map Spawner" && isTabActive
+        shouldPutInList = isTabActive && cp && cp:GetTable().ActiveCPName == "NPC Map Spawner"
 
         net.Start("NPCMS_DoAddNPCFromSpawnMenu")
         net.WriteBool(shouldPutInList)
