@@ -7,6 +7,7 @@ local NPC = FindMetaTable("NPC")
 
 
 NPCMS.SpawnedNPCs = NPCMS.SpawnedNPCs or {}
+NPCMS.NPCTypesSpawned = NPCMS.NPCTypesSpawned or {}
 NPCMS.NPCColCache = {} -- Table of NPC collisions
 NPCMS.CollisionsBeingCached = {}
 
@@ -96,6 +97,8 @@ function NPCMS:SpawnNPC( spawnmenuclass, nodepos, SPAWNDATA )
         end
     end)
 
+    npc.SPAWNDATA = SPAWNDATA
+
 
     if IsValid(npc) then
 
@@ -116,10 +119,15 @@ end
 function NPCMS:OnNPCSpawned( npc )
     -- Add to spawned table
     table.insert(self.SpawnedNPCs, npc)
+
+    self.NPCTypesSpawned[npc.SPAWNDATA.sv_idx] =
+    self.NPCTypesSpawned[npc.SPAWNDATA.sv_idx] && self.NPCTypesSpawned[npc.SPAWNDATA.sv_idx] + 1 or 1
 end
 
 
 function NPCMS:OnRemoveNPC( npc )
+    self.NPCTypesSpawned[npc.SPAWNDATA.sv_idx] = self.NPCTypesSpawned[npc.SPAWNDATA.sv_idx] - 1
+
     -- Remove from spawned table
     table.RemoveByValue(self.SpawnedNPCs, npc)
 end

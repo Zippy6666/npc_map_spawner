@@ -24,7 +24,7 @@ if CLIENT then
         end
         local PresetBox = self.PresetBox
 
-    
+        self.PresetBox:AddChoice("NONE", "NONE")
 
         local buttonAddPreset = panel:Button("Add Preset")
         buttonAddPreset.DoClick = function()
@@ -278,6 +278,7 @@ if SERVER then
         SPAWNDATA.menucls = menucls
         SPAWNDATA.chance = 1
         SPAWNDATA.code = ""
+        SPAWNDATA.num = 0
 
         -- Insert spawn data into table
         local idx = table.insert(self.CurrentSpawnableNPCs, SPAWNDATA)
@@ -431,11 +432,21 @@ if SERVER then
     net.Receive("NPCMS_SelectPreset", function(_, ply)
         if !ply:IsSuperAdmin() then return end
 
-        local pfile = "npcms_presets/"..net.ReadString()
+        local str = net.ReadString()
+
+        if str == "NONE" then
+            table.Empty(NPCMS.CurrentSpawnableNPCs)
+            PrintMessage(HUD_PRINTTALK, "NPC MAP SPAWNER: No preset active.")
+            NPCMS:RefreshClientNPCList(ply)
+            return
+        end
+
+        local pfile = "npcms_presets/"..str
         if file.Exists(pfile, "DATA") then
             NPCMS.CurrentSpawnableNPCs = util.JSONToTable( file.Read(pfile, "DATA") )
             PrintMessage(HUD_PRINTTALK, "NPC MAP SPAWNER: Selected preset '"..pfile.."'")
         end
+
         NPCMS:RefreshClientNPCList(ply)
     end)
 

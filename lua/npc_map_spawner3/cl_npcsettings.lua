@@ -49,9 +49,16 @@ function NPCMS.NPCMenu:OpenSettings( npc_reported_cur_settings )
 
     -- Chance
     local chancenum = self:CreateVGUITitled("DNumberWang", pnl1, "Chance 1/X")
-    chancenum:SetValue(npc_reported_cur_settings.chance)
+    chancenum:SetValue(npc_reported_cur_settings.chance or 1)
     chancenum.OnValueChanged = function( _, value )
         newsettings.chance = value
+    end
+
+    -- How many NPCs
+    local npcnum = self:CreateVGUITitled("DNumberWang", pnl1, "Max Spawned, 0 = No limit.")
+    npcnum:SetValue(npc_reported_cur_settings.num or 0)
+    npcnum.OnValueChanged = function( _, value )
+        newsettings.num = value
     end
 
     -- Coding panel
@@ -62,7 +69,7 @@ function NPCMS.NPCMenu:OpenSettings( npc_reported_cur_settings )
     self.CodeEntry:SetTextColor(Color(180, 180, 160))
     self.CodeEntry:SetTabbingDisabled( true )
     self.CodeEntry:SetPlaceholderText("self:Give('weapon_pistol')")
-    self.CodeEntry:SetText(npc_reported_cur_settings.code)
+    self.CodeEntry:SetText(npc_reported_cur_settings.code or "")
 
 
     -- Save button
