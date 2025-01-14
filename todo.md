@@ -1,10 +1,4 @@
-# Todo
-- [x] Remove from list
-- [x] Refresh list
-- [x] Reset settings button
-- [x] Presets
-    - [x] Read and put in dropdown
-    - [ ] Overwrite message box
+# TODO
 
 
 # Ideas

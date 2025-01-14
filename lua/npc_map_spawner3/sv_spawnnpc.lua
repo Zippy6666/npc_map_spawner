@@ -22,14 +22,6 @@ function NPC:NPCMSCollCache( mySpawnmenuclass )
 end
 
 
-    -- Decide which NPC we should spawn
-    -- Return npc class in spawn menu
-function NPCMS:GetNPCClsToSpawn()
-    local SPAWNDATA = table.Random(self.CurrentSpawnableNPCs)
-    return SPAWNDATA.menucls
-end
-
-
     -- Cache collisions for a specific NPC by 'spawnmenuclass'
 function NPCMS:CacheCollisions( spawnmenuclass )
 
@@ -73,34 +65,25 @@ end
 
     -- Try spawning an NPC of type 'spawnmenuclass' at 'nodepos'
 function NPCMS:SpawnNPC( spawnmenuclass, nodepos )
-
     if !self.NPCColCache[spawnmenuclass] then
-        
         -- Cache collisions first
         if !self.CollisionsBeingCached[spawnmenuclass] then
             self:CacheCollisions( spawnmenuclass )
             self.CollisionsBeingCached[spawnmenuclass] = true
         end
 
-
         -- maybe collect other data as well?
 
-
         return false -- Cancel
-
     end
-
-
 
     -- Get an ideal position for the NPC based on the node position
     local pos = self:GoodNPCPos(spawnmenuclass, nodepos)
-
 
     -- Do a collision check
     if !self:DoCollCheck( spawnmenuclass, pos ) then
         return false -- Failed, stop here
     end
-
 
     -- Spawn the NPC
     local npc = ents.CreateSpawnMenuNPC( spawnmenuclass, pos )
@@ -114,8 +97,6 @@ function NPCMS:SpawnNPC( spawnmenuclass, nodepos )
         end)
 
     end
-
-
 
     return true
 

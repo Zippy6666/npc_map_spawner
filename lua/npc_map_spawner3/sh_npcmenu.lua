@@ -1,19 +1,12 @@
 local NPC_Limit = 125 -- How many NPCs is a preset allowed to have
 
 
--- Should be adjusted according to NPC_Limit
--- https://wiki.facepunch.com/gmod/net.WriteUInt
-local NPC_Limit_BitCount = 7
-
-
-
 if CLIENT then
     NPCMS.NPCMenu = NPCMS.NPCMenu or {}
 
 
     local chatcol1 = Color(75, 255, 0)
     local chatcol2 = Color(255, 75, 0)
-
 
 
         -- The NPC List menu
@@ -25,7 +18,7 @@ if CLIENT then
         self.PresetBox:DockMargin(10, 10, 10, 10)
         self:CallPopulatePresetBox()
         function self.PresetBox:OnSelect(_, _, presetFile)
-            net.Start("NPCMP_SelectPreset")
+            net.Start("NPCMS_SelectPreset")
             net.WriteString(presetFile)
             net.SendToServer()
         end
@@ -128,16 +121,16 @@ if CLIENT then
             table.Merge(npclist, table.Copy(ZBaseNPCs))
         end
 
-        local npctbl = npclist[data.spawnmenuclass]
+        local npctbl = npclist[data.menucls]
 
         if !npctbl then
-            chat.AddText(chatcol2, "NPC MAP SPAWNER: Could not find '"..data.spawnmenuclass.."', addon missing?")
+            chat.AddText(chatcol2, "NPC MAP SPAWNER: Could not find '"..data.menucls.."', addon missing?")
             return
         end
 
 
         if self.NPC_List && self.NPC_List.AddLine then
-            local line = self.NPC_List:AddLine( data.server_idx, npctbl.Name )
+            local line = self.NPC_List:AddLine( data.sv_idx, npctbl.Name )
             line.OnRightClick = function()
 
                 -- NPC line options
@@ -145,12 +138,12 @@ if CLIENT then
                 options:AddOption("Remove", function()
 
                     net.Start("NPCMS_RemoveNPC")
-                    net.WriteUInt(data.server_idx, NPC_Limit_BitCount)
+                    net.WriteUInt(data.sv_idx, 16)
                     net.SendToServer()
 
                 end)
                 options:AddOption("Settings", function()
-
+                    self:OpenSettings( data )
                 end)
                 options:Open()
         
@@ -165,15 +158,8 @@ if CLIENT then
 
         -- Add NPC to list from spawnmenu by player
     net.Receive("NPCMS_AddNPCToList", function()
-        local spawnmenuclass = net.ReadString()
-        local server_idx = net.ReadUInt(NPC_Limit_BitCount)
-
-        local data = {spawnmenuclass=spawnmenuclass, server_idx=server_idx}
-
         if NPCMS && NPCMS.NPCMenu && NPCMS.NPCMenu.NPC_List then
-
-            NPCMS.NPCMenu:AddNPCToList( data )
-
+            NPCMS.NPCMenu:AddNPCToList( net.ReadTable() )
         end
     end)
 
@@ -267,52 +253,69 @@ if SERVER then
     util.AddNetworkString("NPCMS_RemovePreset")
     util.AddNetworkString("NPCMS_TellServerFetchPresets")
     util.AddNetworkString("NPCMS_SendPresetNameToCl")
-    util.AddNetworkString("NPCMP_SelectPreset")
+    util.AddNetworkString("NPCMS_SelectPreset")
+    util.AddNetworkString("NPCMS_ChangeNPCSettings")
 
 
     -- A table containing SPAWNDATAs
     -- Spawn data contains all info about an NPC that can be spawned (menu class, chance, etc)
-    NPCMS.CurrentSpawnableNPCs = {} 
+    NPCMS.CurrentSpawnableNPCs = {}
 
 
         -- Add an NPC
         -- Adds to the table and broadcasts to all clients so that the NPC shows up in their lists if available
-    function NPCMS:AddToCurrentSpawnableNPCs(spawnmenuclass)
-
+    function NPCMS:AddToCurrentSpawnableNPCs(menucls)
         -- New SPAWNDATA object
         local SPAWNDATA = {}
-        SPAWNDATA.menucls = spawnmenuclass
-        
+        SPAWNDATA.menucls = menucls
+        SPAWNDATA.chance = 1
 
         -- Insert spawn data into table
         local idx = table.insert(self.CurrentSpawnableNPCs, SPAWNDATA)
-
+        SPAWNDATA.sv_idx = idx
 
         -- Notify
         PrintMessage(HUD_PRINTTALK, "NPC MAP SPAWNER: Added '"..SPAWNDATA.menucls.."' to the spawner.")
 
-
         -- Update lists
         net.Start("NPCMS_AddNPCToList")
-        net.WriteString(SPAWNDATA.menucls)
-        net.WriteUInt(idx, NPC_Limit_BitCount)
+        net.WriteTable(SPAWNDATA)
         net.Broadcast()
-
     end
+
+
+    net.Receive("NPCMS_ChangeNPCSettings", function(_, ply)
+        if !ply:IsSuperAdmin() then return end
+
+        local SPAWNDATA_NEW = net.ReadTable()
+
+        for k, SPAWNDATA in ipairs(NPCMS.CurrentSpawnableNPCs) do
+            if SPAWNDATA.sv_idx == SPAWNDATA_NEW.sv_idx then
+                NPCMS.CurrentSpawnableNPCs[k] = SPAWNDATA_NEW
+                MsgC(Color(0,255,0), "NPC ", k, " is now: ")
+                PrintTable(SPAWNDATA_NEW)
+                NPCMS:RefreshClientNPCList( ply )
+                return
+            end
+        end
+        
+        conv.devPrint(Color(255,0,0), "Tried editing a NPC that did not exist.")
+    end)
 
 
         -- Remove an NPC
     net.Receive("NPCMS_RemoveNPC", function(_, ply)
         if !ply:IsSuperAdmin() then return end
 
-        local idx = net.ReadUInt(NPC_Limit_BitCount) -- Index for spawn data to remove
-        local SPAWNDATA = NPCMS.CurrentSpawnableNPCs[idx] -- The spawn data to remove
-        local spawnmenuclass = SPAWNDATA && SPAWNDATA.menucls
+        local idx = net.ReadUInt(16) -- Index for spawn data to remove
 
-        if spawnmenuclass then
-            table.remove(NPCMS.CurrentSpawnableNPCs, idx)
-            NPCMS:RefreshClientNPCList( ply )
+        for k, v in ipairs(NPCMS.CurrentSpawnableNPCs) do
+            if v.sv_idx == idx then
+                table.remove(NPCMS.CurrentSpawnableNPCs, k)
+                break
+            end
         end
+        NPCMS:RefreshClientNPCList( ply )
     end)
 
 
@@ -335,8 +338,7 @@ if SERVER then
 
         for idx, SPAWNDATA in ipairs(NPCMS.CurrentSpawnableNPCs) do
             net.Start("NPCMS_AddNPCToList")
-            net.WriteString(SPAWNDATA.menucls)
-            net.WriteUInt(idx, NPC_Limit_BitCount)
+            net.WriteTable(SPAWNDATA)
             net.Send(ply)
         end
 
@@ -417,7 +419,7 @@ if SERVER then
     end)
 
 
-    net.Receive("NPCMP_SelectPreset", function(_, ply)
+    net.Receive("NPCMS_SelectPreset", function(_, ply)
         if !ply:IsSuperAdmin() then return end
 
         local pfile = "npcms_presets/"..net.ReadString()
