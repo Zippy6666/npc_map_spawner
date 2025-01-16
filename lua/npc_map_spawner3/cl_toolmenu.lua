@@ -43,3 +43,5 @@ hook.Add("PopulateToolMenu", "NPCMS3", function()
     end)
 
 end)
+
+print("helo")

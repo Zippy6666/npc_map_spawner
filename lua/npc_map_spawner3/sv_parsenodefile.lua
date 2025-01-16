@@ -148,10 +148,10 @@ local fromGndDist = 10
 local trUpVec = Vector(0, 0, 30)
 local trEnd_DownVec = Vector(0, 0, 30)
 local fromGndVec = Vector(0, 0, fromGndDist)
-local dev = GetConVar("developer")
 local green = Color(0, 255, 0)
 function NPCMS:GetAugmentedNodePositions()
 	local nodepositions = {}
+	local Areas = {}
 
 
 	for _, pos in ipairs(self:GetNodePositions()) do
@@ -176,16 +176,29 @@ function NPCMS:GetAugmentedNodePositions()
 			continue
 		end
 
+		local areas = NPCMS_GetAreasAtPos( pos )
+
+		-- In blacklisted area
+		local inBlacklistedArea = false
+		for _, area in ipairs(areas) do
+			if area.action == "Blacklist" then
+				inBlacklistedArea = true
+				break
+			end
+		end
+		if inBlacklistedArea then
+			continue
+		end
 
 		-- Good position, use this one
 		table.insert(nodepositions, pos)
 
 	end
 
-	return nodepositions
+	return nodepositions, Areas
 end
 hook.Add("InitPostEntity", "NPCMapSpawnerNodes", function()
-	NPCMS.NodePositions = NPCMS:GetAugmentedNodePositions()
+	RunConsoleCommand("npc_map_spawner_reload_nodes")
 end)
 concommand.Add("npc_map_spawner_reload_nodes", function()
 
@@ -195,17 +208,15 @@ concommand.Add("npc_map_spawner_reload_nodes", function()
 		MsgN("No nodes...")
 	end
 
-	if dev:GetBool() then
-		for _, v in ipairs(NPCMS.NodePositions) do
-			local test = ents.Create("base_gmodentity")
-			test:SetModel("models/hunter/blocks/cube025x025x025.mdl")
-			test:SetMaterial("models/wireframe")
-			test:SetPos(v)
-			test:SetColor(green)
-			test:DrawShadow(false)
-			test:Spawn()
-			SafeRemoveEntityDelayed(test, 5)
-		end
+	for _, v in ipairs(NPCMS.NodePositions) do
+		local test = ents.Create("base_gmodentity")
+		test:SetModel("models/hunter/blocks/cube025x025x025.mdl")
+		test:SetMaterial("models/wireframe")
+		test:SetPos(v)
+		test:SetColor(green)
+		test:DrawShadow(false)
+		test:Spawn()
+		SafeRemoveEntityDelayed(test, 5)
 	end
 
 end)

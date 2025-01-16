@@ -35,7 +35,7 @@ function NPCMS:SpawnRoutine()
         end
     end
 
-
+    
     -- Set next spawn routine
     NextSpawnRoutine = CurTime()+self.cvar_cooldown:GetFloat() 
 

@@ -29,6 +29,8 @@ function NPCMS.NPCMenu:OpenSettings( npc_reported_cur_settings )
     self.SettingsFrame:Center()
     self.SettingsFrame:MakePopup()
     self.SettingsFrame.OnKeyCodePressed = function( _, key )
+        if self.TagEntry && self.TagEntry:HasFocus() then return end
+
         if key == KEY_ENTER then
             self:SaveSettings(newsettings)
         end
@@ -61,16 +63,34 @@ function NPCMS.NPCMenu:OpenSettings( npc_reported_cur_settings )
         newsettings.num = value
     end
 
+    -- NPC Tag
+    local tagentry = self:CreateVGUITitled("DTextEntry", pnl1, "Give new spawn area tags here:")
+    local taglist = self:CreateVGUITitled("DListView", pnl1, "Spawn Area Tags")
+    local x, y = taglist:GetSize()
+    taglist:SetSize(x, height*0.25)
+    taglist:AddColumn("Tag")
+    tagentry.OnValueChange = function(_, value)
+        if #value < 0 then return end
+
+        newsettings.tags = newsettings.tags or {}
+        newsettings.tags[value] = true
+
+        taglist:AddLine(value)
+    end
+    for k in pairs(newsettings.tags or {}) do
+        taglist:AddLine(k)
+    end
+    self.TagEntry = tagentry
+
+
     -- Coding panel
-    self.CodeEntry = self:CreateVGUITitled("DTextEntry", pnl2, "LUA to execute on spawn, the NPC is 'self'.")
+    self.CodeEntry = self:CreateVGUITitled("DTextEntry", pnl2, "LUA to execute before spawn, the NPC is 'self'.")
     self.CodeEntry:SetHeight(height*0.75)
     self.CodeEntry:SetMultiline(true)
     self.CodeEntry:SetFont("TargetIDSmall")
     self.CodeEntry:SetTextColor(Color(180, 180, 160))
-    self.CodeEntry:SetTabbingDisabled( true )
-    self.CodeEntry:SetPlaceholderText("self:Give('weapon_pistol')")
+    self.CodeEntry:SetPlaceholderText("-- Example: self:SetHealth(1000)")
     self.CodeEntry:SetText(npc_reported_cur_settings.code or "")
-
 
     -- Save button
     local savebutton = self:CreateVGUITitled("DButton", pnl3, "Save the settings.", BOTTOM)
