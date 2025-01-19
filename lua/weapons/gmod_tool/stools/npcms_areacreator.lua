@@ -292,12 +292,6 @@ if CLIENT then
 
         local vg
 
-        panel:ControlHelp("NOTE: If the areas don't seem to be doing anything, it could be because you have \"Obey Spawn Areas\" disabled!")
-
-        panel:Help("** BASIC **")
-
-        panel:Help("Default area action:")
-
         local action_dropdown_choice = "Blacklist" 
         local action_dropdown = vgui.Create("DComboBox", panel)
         action_dropdown:Dock(TOP)
@@ -313,23 +307,13 @@ if CLIENT then
         action_dropdown:AddChoice("Blacklist", nil, true)
         action_dropdown:AddChoice("Force", nil, false)
 
-        panel:ControlHelp("Blacklist = NPC spawning is not allowed in this area.")
-        panel:ControlHelp("Whitelist = NPC spawning is allowed in this area.")
-        panel:ControlHelp("Force = NPC spawning must occur in this area, or in another area with \"Force\".")
-
-        panel:Help("Area color:")
-
-        local color_disp = vgui.Create("DColorButton", panel)
-
         local function change_color( col )
             ply().NPCMSTool_area_color = Color(col.r, col.g, col.b)
-            color_disp:SetColor(ply().NPCMSTool_area_color)
 
             net.Start("NPCMS_AreaColor_Server")
             net.WriteColor(ply().NPCMSTool_area_color)
             net.SendToServer()
         end
-
         vg = vgui.Create("DColorPalette", panel)
         vg:SetButtonSize(15)
         vg:Dock(TOP)
@@ -338,13 +322,7 @@ if CLIENT then
             change_color( col )
         end
 
-        color_disp:SetColor(ply().NPCMSTool_area_color)
-        color_disp:Dock(TOP)
-        color_disp:SetHeight(12)
-        color_disp:DockMargin(5, 5, 5, 5)
-
         panel:Help("Areas:")
-
         ply().NPCMSTool_area_list = vgui.Create("DListView", panel)
         ply().NPCMSTool_area_list:SetMultiSelect(false)
         ply().NPCMSTool_area_list:Dock(TOP)
@@ -354,8 +332,8 @@ if CLIENT then
         column:SetMaxWidth(12)
         column:SetWidth(12)
         ply().NPCMSTool_area_list:AddColumn("Area")
-        ply().NPCMSTool_area_list:AddColumn("Action")
-        ply().NPCMSTool_area_list:SetHeight(400)
+        ply().NPCMSTool_area_list:AddColumn("Area Type")
+        ply().NPCMSTool_area_list:SetHeight(300)
         ply().NPCMSTool_area_list.OnRowRightClick = function( _, i )
             local options = DermaMenu()
             
@@ -394,19 +372,13 @@ if CLIENT then
             options:Open()
         end
 
-        panel:Help("** ADVANCED **")
-
-        panel:Help("Double click to change specific action for a Tag:")
-
-        panel:ControlHelp("Default = The specific Tag uses the default area action.")
-
         ply().NPCMSTool_Tag_list = vgui.Create("DListView", panel)
         ply().NPCMSTool_Tag_list:SetMultiSelect(false)
         ply().NPCMSTool_Tag_list:Dock(TOP)
         ply().NPCMSTool_Tag_list:DockMargin(5, 5, 5, 0)
         ply().NPCMSTool_Tag_list:AddColumn("Tags")
-        ply().NPCMSTool_Tag_list:AddColumn("Specific Action")
-        ply().NPCMSTool_Tag_list:SetHeight(400)
+        ply().NPCMSTool_Tag_list:AddColumn("Area Type")
+        ply().NPCMSTool_Tag_list:SetHeight(200)
         ply().NPCMSTool_Tag_list.DoDoubleClick = function( _, i )
             local gr = ply().NPCMSTool_Tag_tbl[i]
 
@@ -427,34 +399,6 @@ if CLIENT then
             net.WriteTable(ply().NPCMSTool_area_actions)
             net.SendToServer()
         end
-
-        local function change_all( action )
-            for _,v in ipairs(ply().NPCMSTool_Tag_tbl) do
-                ply().NPCMSTool_area_actions[ v ] = action
-            end
-
-            net.Start("NPCMS_GetServerTags")
-            net.SendToServer()
-
-            net.Start("NPCMS_AreaTagActions_Server")
-            net.WriteTable(ply().NPCMSTool_area_actions)
-            net.SendToServer()
-        end
-
-        local function make_button( label, action )
-            vg = vgui.Create("DButton", panel)
-            vg:SetText(label)
-            vg:Dock(TOP)
-            vg:DockMargin(5, 0, 5, 0)
-            vg.DoClick = function()
-                change_all(action)
-            end
-        end
-
-        make_button("Blacklist All", "Blacklist")
-        make_button("Force All", "Force")
-        make_button("Whitelist All", "Whitelist")
-        make_button("Set All to Default (make area not advanced)", nil)
 
         net.Start("NPCMS_AreaTagActions_Server")
         net.WriteTable(ply().NPCMSTool_area_actions)
