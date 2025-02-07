@@ -19,8 +19,8 @@ createCVAR("cooldown", "3")
 createCVAR("poscount", "3")
 createCVAR("maxnpcs", "50")
 createCVAR("mindist", "2000")
-createCVAR("maxdist", "6000")
-createCVAR("visibility", "0")
+createCVAR("maxdist", "8000")
+createCVAR("visibility", "1")
 
 
 
