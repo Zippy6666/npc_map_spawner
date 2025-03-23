@@ -197,9 +197,6 @@ function NPCMS:GetAugmentedNodePositions()
 
 	return nodepositions, Areas
 end
-hook.Add("InitPostEntity", "NPCMapSpawnerNodes", function()
-	RunConsoleCommand("npc_map_spawner_reload_nodes")
-end)
 concommand.Add("npc_map_spawner_reload_nodes", function()
 
 	NPCMS.NodePositions = NPCMS:GetAugmentedNodePositions()

@@ -10,6 +10,14 @@ function NPCMS:SpawnRoutine()
     -- Track time
     local startTime = SysTime()
 
+    if !self.NodePositions then
+        if !self.m_bFetchingNodes then
+            RunConsoleCommand("npc_map_spawner_reload_nodes")
+            self.m_bFetchingNodes = true
+        end
+        
+        return
+    end
 
     -- No nodes on the map
     if table.IsEmpty(self.NodePositions) then
