@@ -2,7 +2,7 @@
 
 local AINET_VERSION_NUMBER = 37
 local NUM_HULLS = 10
-local MAX_NODES = 4096
+local MAX_NODES = 8192
 
 local SIZEOF_INT = 4
 local SIZEOF_SHORT = 2

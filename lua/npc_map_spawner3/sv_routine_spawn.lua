@@ -41,7 +41,7 @@ function NPCMS:SpawnRoutine()
             self:SpawnNPC( cls, v, SPAWNDATA ) -- Spawn on each spawn position
         end
     end
-    
+
     -- Set next spawn routine
     nextSpawnRoutine = CurTime()+self.cvar_cooldown:GetFloat() 
 
@@ -55,7 +55,6 @@ function NPCMS:SpawnRoutine()
 
         showInfoLastNPCCount = npccount
     end
-
 end
 
     -- Tick function
@@ -80,7 +79,8 @@ function NPCMS:FindDesiredSpawnPositions( count )
         -- Find a spawn position
         local ply = table.Random(players)
         if ply then
-            local pos = self:FindSpawnPosition( ply, self.cvar_mindist:GetInt(), self.cvar_maxdist:GetInt(), extraData )
+            local pos = self:FindSpawnPosition( ply, self.cvar_mindist:GetInt(), self.cvar_maxdist:GetInt(), 
+            extraData )
             if pos then
                 table.insert(positions, pos)
             end

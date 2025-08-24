@@ -458,13 +458,9 @@ elseif SERVER then
 
     net.Receive("NPCMS_RemoveAllNPCs", function()
         for k, v in ipairs(NPCMS.SpawnedNPCs) do
-            if IsValid(v) then v:Remove() end
+            if IsValid(v) then 
+                v:Remove() 
+            end
         end
     end)
 end
-
-
-
-
-
-

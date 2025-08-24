@@ -9,7 +9,7 @@ local function createCVAR( name, value, flags, helptext )
 end
 
     -- Create cvars
-createCVAR("enable", "0")
+createCVAR("enable", "0", FCVAR_REPLICATED+FCVAR_NOTIFY)
 createCVAR("show_info", "1")
 createCVAR("cooldown", "3")
 createCVAR("poscount", "3")
