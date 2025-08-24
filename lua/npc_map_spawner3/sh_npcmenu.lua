@@ -261,8 +261,6 @@ if CLIENT then
         net.WriteString(wep)
         net.SendToServer()
     end)
-end
-
 elseif SERVER then
     util.AddNetworkString("NPCMS_AddNPCToList")
     util.AddNetworkString("NPCMS_ClearNPCList")
