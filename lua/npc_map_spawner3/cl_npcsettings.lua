@@ -1,6 +1,5 @@
 NPCMS.NPCMenu = NPCMS.NPCMenu or {} -- Do this wherever this object is used
 
-
 function NPCMS.NPCMenu:CreateVGUITitled( vg, parent, title, optionalDock )
     local label = vgui.Create("DLabel", parent)
     label:SetText(title)
@@ -13,7 +12,6 @@ function NPCMS.NPCMenu:CreateVGUITitled( vg, parent, title, optionalDock )
 
     return dermathing
 end
-
 
 local numPanels = 3
 function NPCMS.NPCMenu:OpenSettings( npc_reported_cur_settings )
@@ -82,7 +80,6 @@ function NPCMS.NPCMenu:OpenSettings( npc_reported_cur_settings )
     end
     self.TagEntry = tagentry
 
-
     -- Coding panel
     self.CodeEntry = self:CreateVGUITitled("DTextEntry", pnl2, "LUA to execute before spawn, the NPC is 'self'.")
     self.CodeEntry:SetHeight(height*0.75)
@@ -99,7 +96,6 @@ function NPCMS.NPCMenu:OpenSettings( npc_reported_cur_settings )
         self:SaveSettings(newsettings)
     end
 end
-
 
 function NPCMS.NPCMenu:SaveSettings( newsettings )
     -- Save code

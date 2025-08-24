@@ -1,38 +1,30 @@
 -- For NPC Spawning
 -- Uses the spawn menu to find stuff about NPCs
 
-
-local dev = GetConVar("developer")
+local developer = GetConVar("developer")
 local NPC = FindMetaTable("NPC")
-
 
 NPCMS.SpawnedNPCs = NPCMS.SpawnedNPCs or {}
 NPCMS.NPCTypesSpawned = NPCMS.NPCTypesSpawned or {}
 NPCMS.NPCColCache = {} -- Table of NPC collisions
 NPCMS.CollisionsBeingCached = {}
 
-
-
     -- Saves NPC collisions and removes the NPC
 function NPC:NPCMSCollCache( mySpawnmenuclass )
     NPCMS.NPCColCache[mySpawnmenuclass] = {self:OBBMins(), self:OBBMaxs()}
-    if dev:GetBool() then
+    if developer:GetBool() then
         PrintMessage(HUD_PRINTTALK, "NPC MAP SPAWNER: Cached "..mySpawnmenuclass.." collisions.")
     end
     self:Remove()
 end
 
-
     -- Cache collisions for a specific NPC by 'spawnmenuclass'
 function NPCMS:CacheCollisions( spawnmenuclass )
-
     local npc = ents.CreateSpawnMenuNPC(spawnmenuclass)
     if IsValid(npc) then
         npc:CallNextTick("NPCMSCollCache", spawnmenuclass)
     end
-
 end
-
 
     -- Check if an NPC of type 'spawnmenuclass' would fit at 'pos'
     -- Returns true if it would, otherwise false
@@ -56,13 +48,11 @@ function NPCMS:DoCollCheck( spawnmenuclass, pos )
     return !tr.Hit
 end
 
-
     -- Get an appropriate position to spawn this NPC on
 function NPCMS:GoodNPCPos( spawnmenuclass, nodepos )
     local mins = self.NPCColCache[spawnmenuclass][1]
     return nodepos+Vector(0, 0, math.abs(mins.z))
 end
-
 
     -- Try spawning an NPC of type 'spawnmenuclass' at 'nodepos'
 function NPCMS:SpawnNPC( spawnmenuclass, nodepos, SPAWNDATA )
@@ -99,7 +89,6 @@ function NPCMS:SpawnNPC( spawnmenuclass, nodepos, SPAWNDATA )
 
     npc.SPAWNDATA = SPAWNDATA
 
-
     if IsValid(npc) then
 
         self:OnNPCSpawned( npc )
@@ -112,9 +101,7 @@ function NPCMS:SpawnNPC( spawnmenuclass, nodepos, SPAWNDATA )
     end
 
     return true
-
 end
-
 
 function NPCMS:OnNPCSpawned( npc )
     -- Add to spawned table
@@ -123,7 +110,6 @@ function NPCMS:OnNPCSpawned( npc )
     self.NPCTypesSpawned[npc.SPAWNDATA.sv_idx] =
     self.NPCTypesSpawned[npc.SPAWNDATA.sv_idx] && self.NPCTypesSpawned[npc.SPAWNDATA.sv_idx] + 1 or 1
 end
-
 
 function NPCMS:OnRemoveNPC( npc )
     self.NPCTypesSpawned[npc.SPAWNDATA.sv_idx] = self.NPCTypesSpawned[npc.SPAWNDATA.sv_idx] - 1

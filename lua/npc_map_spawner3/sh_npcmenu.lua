@@ -1,13 +1,10 @@
-local NPC_Limit = 125 -- How many NPCs is a preset allowed to have
-
+local MAX_PRESET_NPCS = 125 -- How many NPCs is a preset allowed to have
 
 if CLIENT then
     NPCMS.NPCMenu = NPCMS.NPCMenu or {}
 
-
     local chatcol1 = Color(75, 255, 0)
     local chatcol2 = Color(255, 75, 0)
-
 
         -- The NPC List menu
     function NPCMS.NPCMenu:CreateNPCMenu(panel)
@@ -41,7 +38,6 @@ if CLIENT then
             self:RemovePreset()
         end
 
-
         -- NPC List: Serves as the client 'CurrentSpawnableNPCs'
         panel:ControlHelp("\nNPC List:")
         self.NPC_List = vgui.Create("DListView", panel)
@@ -68,8 +64,6 @@ if CLIENT then
             end
         end
 
-
-
         -- Refresh list
         local buttonRefresh = panel:Button("Refresh")
         function buttonRefresh:DoClick()
@@ -79,15 +73,12 @@ if CLIENT then
         -- Refresh now
         net.Start("NPCMS_Refresh")
         net.SendToServer()
-
     end
-
 
     function NPCMS.NPCMenu:CallPopulatePresetBox()
         net.Start("NPCMS_TellServerFetchPresets")
         net.SendToServer()
     end
-
 
     net.Receive("NPCMS_SendPresetNameToCl", function()
         if !NPCMS.NPCMenu.PresetBox then return end
@@ -96,18 +87,15 @@ if CLIENT then
         NPCMS.NPCMenu.PresetBox:AddChoice(presetName, f)
     end)
 
-
     function NPCMS.NPCMenu:GetSelectedPreset()
         return self.PresetBox:GetSelected() -- or self.LastPresetChoice or "default"
     end
-
 
     function NPCMS.NPCMenu:ClearList()
         for k in ipairs(self.NPC_List:GetLines()) do
             self.NPC_List:RemoveLine(k)
         end
     end
-
 
         -- Adds NPCs to the client's list
     function NPCMS.NPCMenu:AddNPCToList( data )
@@ -123,7 +111,6 @@ if CLIENT then
             chat.AddText(chatcol2, "NPC MAP SPAWNER: Could not find '"..data.menucls.."', addon missing?")
             return
         end
-
 
         if self.NPC_List && self.NPC_List.AddLine then
             local line = self.NPC_List:AddLine( data.sv_idx, npctbl.Name )
@@ -157,8 +144,6 @@ if CLIENT then
         end
     end
 
-
-
         -- Add NPC to list from spawnmenu by player
     net.Receive("NPCMS_AddNPCToList", function()
         if NPCMS && NPCMS.NPCMenu && NPCMS.NPCMenu.NPC_List then
@@ -166,13 +151,11 @@ if CLIENT then
         end
     end)
 
-
     net.Receive("NPCMS_ClearNPCList", function()
         if NPCMS && NPCMS.NPCMenu && NPCMS.NPCMenu.NPC_List then
             NPCMS.NPCMenu:ClearList()
         end
     end)
-
 
     function NPCMS.NPCMenu:ClearPresets( presetToSelectAfterClear )
         if self.PresetBox then
@@ -186,7 +169,6 @@ if CLIENT then
             end
         end)
     end
-
 
     function NPCMS.NPCMenu:AddPreset()
         local frame = vgui.Create("DFrame")
@@ -235,7 +217,6 @@ if CLIENT then
         entry:DockMargin(0,3,0,6)
     end
 
-
     function NPCMS.NPCMenu:RemovePreset()
         local presetName = NPCMS.NPCMenu:GetSelectedPreset()
         if !presetName then return end
@@ -251,7 +232,6 @@ if CLIENT then
 
         end, "Keep")
     end
-
 
     net.Receive("NPCMS_DoAddNPCFromSpawnMenu", function()
         local npc_type = net.ReadString()
@@ -281,14 +261,9 @@ if CLIENT then
         net.WriteString(wep)
         net.SendToServer()
     end)
-
 end
 
-
-
-
-if SERVER then
-
+elseif SERVER then
     util.AddNetworkString("NPCMS_AddNPCToList")
     util.AddNetworkString("NPCMS_ClearNPCList")
     util.AddNetworkString("NPCMS_Refresh")
@@ -305,7 +280,6 @@ if SERVER then
     -- A table containing SPAWNDATAs
     -- Spawn data contains all info about an NPC that can be spawned (menu class, chance, etc)
     NPCMS.CurrentSpawnableNPCs = {}
-
 
         -- Add an NPC
         -- Adds to the table and broadcasts to all clients so that the NPC shows up in their lists if available
@@ -330,7 +304,6 @@ if SERVER then
         net.Broadcast()
     end
 
-
     net.Receive("NPCMS_ChangeNPCSettings", function(_, ply)
         if !ply:IsSuperAdmin() then return end
 
@@ -349,7 +322,6 @@ if SERVER then
         conv.devPrint(Color(255,0,0), "Tried editing a NPC that did not exist.")
     end)
 
-
         -- Remove an NPC
     net.Receive("NPCMS_RemoveNPC", function(_, ply)
         if !ply:IsSuperAdmin() then return end
@@ -365,7 +337,6 @@ if SERVER then
         NPCMS:RefreshClientNPCList( ply )
     end)
 
-
     function NPCMS:RefreshPresetsToClient( ply )
         local files = file.Find("npcms_presets/*", "DATA")
 
@@ -375,7 +346,6 @@ if SERVER then
             net.Send(ply)
         end
     end
-
 
     function NPCMS:RefreshClientNPCList( ply )
 
@@ -389,7 +359,6 @@ if SERVER then
         end
 
     end
-
 
         -- Create a new preset of the current NPCs
     net.Receive("NPCMS_AddPreset", function(_, ply)
@@ -406,7 +375,6 @@ if SERVER then
         NPCMS:RefreshPresetsToClient(ply)
     end)
 
-
         -- Create a new preset of the current NPCs
     net.Receive("NPCMS_RemovePreset", function(_, ply)
     
@@ -420,12 +388,10 @@ if SERVER then
 
     end)
 
-
     net.Receive("NPCMS_Refresh", function(_, ply)
         if !ply:IsSuperAdmin() then return end
         NPCMS:RefreshClientNPCList( ply )
     end)
-
 
     net.Receive("NPCMS_DoAddNPCFromSpawnMenu", function(_, ply)
         if ply:IsSuperAdmin() then
@@ -435,8 +401,8 @@ if SERVER then
 
             if shouldAddToMenu == true then
                 
-                if #NPCMS.CurrentSpawnableNPCs >= NPC_Limit then
-                    PrintMessage(HUD_PRINTTALK, "NPC MAP SPAWNER: Cannot add any more NPCs to this preset! Limit reached ("..NPC_Limit..")")
+                if #NPCMS.CurrentSpawnableNPCs >= MAX_PRESET_NPCS then
+                    PrintMessage(HUD_PRINTTALK, "NPC MAP SPAWNER: Cannot add any more NPCs to this preset! Limit reached ("..MAX_PRESET_NPCS..")")
                     return false
                 end
 
@@ -449,7 +415,6 @@ if SERVER then
             end
         end
     end)
-
 
         -- Select NPCs to add to the NPC list when clicking the icons in the spawnmenu
     hook.Add("PlayerSpawnNPC", "NPCMapSpawner_Selecting", function( ply, npc_type, wep )
@@ -466,13 +431,11 @@ if SERVER then
         end
     end)
 
-
     net.Receive("NPCMS_TellServerFetchPresets", function(_, ply)
         if !ply:IsSuperAdmin() then return end
 
         NPCMS:RefreshPresetsToClient(ply)
     end)
-
 
     net.Receive("NPCMS_SelectPreset", function(_, ply)
         if !ply:IsSuperAdmin() then return end
@@ -494,7 +457,6 @@ if SERVER then
 
         NPCMS:RefreshClientNPCList(ply)
     end)
-
 
     net.Receive("NPCMS_RemoveAllNPCs", function()
         for k, v in ipairs(NPCMS.SpawnedNPCs) do

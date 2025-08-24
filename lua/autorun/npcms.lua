@@ -27,9 +27,7 @@ hook.Add("PlayerInitialSpawn", "MissingConvMsg2", function( ply )
 end)
 --[[============================ CONV MESSAGE END ============================]]--
 
-
 NPCMS = NPCMS or {}
-
 
 include("autorun/conv.lua")
 conv.includeDir("npc_map_spawner3")

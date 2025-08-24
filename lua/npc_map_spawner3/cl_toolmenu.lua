@@ -1,9 +1,6 @@
 -- Tool/options menu
-
 hook.Add("PopulateToolMenu", "NPCMS3", function()
-
     spawnmenu.AddToolMenuOption("Utilities", "AI", "NPC Map Spawner", "NPC Map Spawner", "", "", function(panel)
-
         local buttonremoveall = panel:Button("Clear Spawned NPCs")
         function buttonremoveall:DoClick()
             net.Start("NPCMS_RemoveAllNPCs")
@@ -39,7 +36,5 @@ hook.Add("PopulateToolMenu", "NPCMS3", function()
             net.Start("NPCMS_ResetSettings")
             net.SendToServer()
         end
-        
     end)
-
 end)

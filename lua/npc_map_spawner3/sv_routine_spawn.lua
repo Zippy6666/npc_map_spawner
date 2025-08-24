@@ -4,8 +4,8 @@ local blue = Color(0, 0, 255)
 local white = Color(255,255,255)
 
     -- Executes a "spawn routine"
-local NextSpawnRoutine = CurTime()
-local ShowInfo_LastNPCCount = 0
+local nextSpawnRoutine = CurTime()
+local showInfoLastNPCCount = 0
 function NPCMS:SpawnRoutine()
     -- Track time
     local startTime = SysTime()
@@ -22,17 +22,16 @@ function NPCMS:SpawnRoutine()
     -- No nodes on the map
     if table.IsEmpty(self.NodePositions) then
         PrintMessage(HUD_PRINTTALK, "NPC MAP SPAWNER: No nodegraph found!")
-        NextSpawnRoutine = CurTime()+3
+        nextSpawnRoutine = CurTime()+3
         return
     end
 
     -- No NPCs to spawn
     if table.IsEmpty(self.CurrentSpawnableNPCs) then
         PrintMessage(HUD_PRINTTALK, "NPC MAP SPAWNER: No NPCs to spawn!")
-        NextSpawnRoutine = CurTime()+3
+        nextSpawnRoutine = CurTime()+3
         return
     end
-
 
     -- Get spawn positions
     local spawnpositions = self:FindDesiredSpawnPositions(self.cvar_poscount:GetInt())
@@ -42,40 +41,32 @@ function NPCMS:SpawnRoutine()
             self:SpawnNPC( cls, v, SPAWNDATA ) -- Spawn on each spawn position
         end
     end
-
     
     -- Set next spawn routine
-    NextSpawnRoutine = CurTime()+self.cvar_cooldown:GetFloat() 
-
+    nextSpawnRoutine = CurTime()+self.cvar_cooldown:GetFloat() 
 
     -- Show info
     if self.cvar_show_info:GetBool() then
-
         local npccount = #self.SpawnedNPCs
         local dur = self.cvar_cooldown:GetFloat()+0.03
         debugoverlay.ScreenText(0.01, 0.40, "Spawn routine time: "..(SysTime() - startTime), dur, white )
-        debugoverlay.ScreenText(0.01, 0.42, "NPCs += "..npccount-ShowInfo_LastNPCCount, dur, white )
+        debugoverlay.ScreenText(0.01, 0.42, "NPCs += "..npccount-showInfoLastNPCCount, dur, white )
         debugoverlay.ScreenText(0.01, 0.44, "Total NPCs: "..npccount, dur, white )
 
-        ShowInfo_LastNPCCount = npccount
+        showInfoLastNPCCount = npccount
     end
+
 end
-
-
 
     -- Tick function
 function NPCMS:SpawnerTick()
-
     if !self.cvar_enable:GetBool() then return end -- Spawner killswitch
-    if NextSpawnRoutine > CurTime() then return end -- Spawner on cooldown
+    if nextSpawnRoutine > CurTime() then return end -- Spawner on cooldown
     if #self.SpawnedNPCs >= self.cvar_maxnpcs:GetInt() then return end -- Too many NPCs
 
     self:SpawnRoutine()
-
 end
 hook.Add("Tick", "NPCMapSpawner3", function() NPCMS:SpawnerTick() end)
-
-
 
     -- Return a table of spawn positions that are ideal for the current settings
 function NPCMS:FindDesiredSpawnPositions( count )
@@ -84,8 +75,8 @@ function NPCMS:FindDesiredSpawnPositions( count )
     local extraData = {
         visibilityCheck = self.cvar_visibility:GetBool()
     }
-    for i = 1, count do
 
+    for i = 1, count do
         -- Find a spawn position
         local ply = table.Random(players)
         if ply then
@@ -94,11 +85,9 @@ function NPCMS:FindDesiredSpawnPositions( count )
                 table.insert(positions, pos)
             end
         end
-    
     end
     return positions
 end
-
 
     -- Finds a position in the map to spawn
     -- Returns a vector or false if none was found
@@ -108,14 +97,12 @@ end
     -- 'extradata.visibilityCheck' - Dont spawn on nodes that are visible to players
 local visCheckUpVec = Vector(0, 0, 40)
 function NPCMS:FindSpawnPosition( ply, mindist, maxdist, extradata )
-
     -- Shuffle order of nodes in table
     table.Shuffle(self.NodePositions)
 
     -- For each node pos...
     for k, pos in pairs(self.NodePositions) do
         local dist = ply:GetPos():DistToSqr(pos)
-
 
         -- Node not in distance, skip
         if dist < mindist^2 then
@@ -125,13 +112,11 @@ function NPCMS:FindSpawnPosition( ply, mindist, maxdist, extradata )
             continue
         end
     
-
         -- Visibility check active and pos is visible, cancel the find
         if extradata.visibilityCheck && conv.playersSeePos( pos+visCheckUpVec ) then
             debugoverlay.Sphere(pos, 40, self, red)
             return false 
         end
-
 
         -- Success, return pos
         debugoverlay.Sphere(pos, 40, self, green)
@@ -139,11 +124,8 @@ function NPCMS:FindSpawnPosition( ply, mindist, maxdist, extradata )
     
     end
 
-
     return false
-
 end
-
 
     -- Notify that the npc map spawner is on when the player logs in
 NPCMS.NotifySpawnerOn_Done = false
@@ -156,5 +138,3 @@ function NPCMS:NotifySpawnerOn()
     end
 end
 hook.Add("PlayerInitialSpawn", "NotifyNPCMapSpawnerIsOn", function() NPCMS:NotifySpawnerOn() end)
-
-

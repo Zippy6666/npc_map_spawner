@@ -1,6 +1,5 @@
 -- Credit: Silverlan
 
-
 local AINET_VERSION_NUMBER = 37
 local NUM_HULLS = 10
 local MAX_NODES = 4096
@@ -8,13 +7,10 @@ local MAX_NODES = 4096
 local SIZEOF_INT = 4
 local SIZEOF_SHORT = 2
 
-
-
 local function toUShort(b)
 	local i = {string.byte(b,1,SIZEOF_SHORT)}
 	return i[1] +i[2] *256
 end
-
 
 local function toInt(b)
 	local i = {string.byte(b,1,SIZEOF_INT)}
@@ -23,12 +19,9 @@ local function toInt(b)
 	return i
 end
 
-
 local function ReadInt(f) return toInt(f:Read(SIZEOF_INT)) end
 
-
 local function ReadUShort(f) return toUShort(f:Read(SIZEOF_SHORT)) end
-
 
 function HordeSilverlanParseFile(f)
 	f = file.Open(f,"rb","GAME")
@@ -117,7 +110,6 @@ function HordeSilverlanParseFile(f)
 	return nodegraph
 end
 
-
 function NPCMS:GetNodePositions()
 	local nodegraph = HordeSilverlanParseFile("maps/graphs/" .. game.GetMap() .. ".ain")
 
@@ -141,8 +133,6 @@ function NPCMS:GetNodePositions()
 
 end
 
-
-
 local ang0 = Angle()
 local fromGndDist = 10
 local trUpVec = Vector(0, 0, 30)
@@ -153,18 +143,14 @@ function NPCMS:GetAugmentedNodePositions()
 	local nodepositions = {}
 	local Areas = {}
 
-
 	for _, pos in ipairs(self:GetNodePositions()) do
-
 		-- Better node position
 		pos = util.TraceLine({start=pos+trUpVec, endpos=pos-trEnd_DownVec, mask=MASK_NPCWORLDSTATIC}).HitPos + fromGndVec
-
 
 		-- Water check, we dont want spawn positions in water
 		if bit.band(util.PointContents(pos), CONTENTS_WATER) == CONTENTS_WATER then
 			continue
 		end
-
 
 		-- Ground distance check
 		local groundDistCheck = util.TraceLine({
@@ -192,13 +178,12 @@ function NPCMS:GetAugmentedNodePositions()
 
 		-- Good position, use this one
 		table.insert(nodepositions, pos)
-
 	end
 
 	return nodepositions, Areas
 end
-concommand.Add("npc_map_spawner_reload_nodes", function()
 
+concommand.Add("npc_map_spawner_reload_nodes", function()
 	NPCMS.NodePositions = NPCMS:GetAugmentedNodePositions()
 
 	if table.IsEmpty(NPCMS.NodePositions) then
@@ -215,6 +200,4 @@ concommand.Add("npc_map_spawner_reload_nodes", function()
 		test:Spawn()
 		SafeRemoveEntityDelayed(test, 5)
 	end
-
 end)
-
